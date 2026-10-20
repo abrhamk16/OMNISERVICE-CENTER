@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>E-Delala — Delala Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Noto+Sans+Ethiopic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/tokens.css">
+<link rel="stylesheet" href="../css/base.css">
+<style>
+  .verify-banner{background:var(--pending-bg); color:var(--pending); border-radius:var(--radius-m); padding:1.1rem 1.4rem; display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap; margin-bottom:1.6rem;}
+  .verify-banner.approved{background:var(--verified-bg); color:var(--verified);}
+  .two-col{display:grid; grid-template-columns:1fr 1fr; gap:1.5rem;}
+  @media (max-width:900px){ .two-col{grid-template-columns:1fr;} }
+</style>
+</head>
+<body>
+<div id="site-header"></div>
+<div class="dash-shell">
+  <aside class="dash-sidebar" id="dash-sidebar"></aside>
+  <main class="dash-main">
+    <h1 id="welcome-msg"></h1>
+    <div class="verify-banner" id="verify-banner"></div>
+    <div class="stat-grid" id="stat-grid"></div>
+    <div class="two-col">
+      <div>
+        <h3 data-i18n="agentDash.recentRequests"></h3>
+        <div class="table-wrap"><table><tbody id="recent-requests"></tbody></table></div>
+      </div>
+      <div>
+        <h3 data-i18n="agentDash.recentTasks"></h3>
+        <div class="table-wrap"><table><tbody id="recent-tasks"></tbody></table></div>
+      </div>
+    </div>
+  </main>
+</div>
+<div id="site-footer" style="display:none;"></div>
+<script src="../js/i18n/en.js"></script>
+<script src="../js/i18n/am.js"></script>
+<script src="../js/i18n.js"></script>
+<script src="../js/store.js"></script>
+<script src="../js/app.js"></script>
+<script>
+  const user = EDELALA.guardRole('AGENT');
+  if(user){
+    EDELALA.renderHeader('agent');
+    EDELALA.renderDashSidebar('agent', 'dashboard.html');
+    const profile = DB.getAgentProfile(user.id);
+
+    function refresh(){
+      document.getElementById('welcome-msg').textContent = I18N.t('agentDash.welcome', { name: user.fullName.split(' ')[0] });
+      const vStatus = profile.verification.status;
+      const banner = document.getElementById('verify-banner');
+      if(vStatus === 'APPROVED'){
+        banner.className = 'verify-banner approved';
+        banner.innerHTML = `<div>🟢 <strong>${I18N.t('verification.status.APPROVED')}</strong></div>`;
+      } else {
+        banner.className = 'verify-banner';
+        banner.innerHTML = `<div>🟡 <span>${I18N.t('agentDash.verifyPrompt')}</span></div><a class="btn btn-primary btn-sm" href="verification.html">${I18N.t('agentDash.verifyCta')}</a>`;
+      }
+
+      const stats = DB.agentStats(user.id);
+      const cards = [
+        ['agentDash.totalListings', stats.totalListings],
+        ['agentDash.activeListings', stats.activeListings],
+        ['agentDash.newRequests', stats.newRequests],
+        ['agentDash.pendingTasks', stats.pendingTasks],
+        ['agentDash.completed', stats.completed]
+      ];
+      document.getElementById('stat-grid').innerHTML = cards.map(([k,v])=>`<div class="stat-card"><div class="num">${v}</div><div class="label" data-i18n="${k}"></div></div>`).join('');
+
+      const reqs = DB.requestsByAgent(user.id).slice(0,5);
+      document.getElementById('recent-requests').innerHTML = reqs.length ? reqs.map(r=>`<tr><td>${EDELALA.escapeHtml(r.name)}</td><td>${r.listing?EDELALA.escapeHtml(r.listing.title):''}</td><td><span class="badge badge-neutral">${I18N.t('request.status.'+r.status)}</span></td></tr>`).join('') : `<tr><td class="text-soft" data-i18n="agentRequests.empty"></td></tr>`;
+
+      const tasks = DB.tasksByAgent(user.id).slice(0,5);
+      document.getElementById('recent-tasks').innerHTML = tasks.length ? tasks.map(t=>`<tr><td>${EDELALA.escapeHtml(t.name)}</td><td>${EDELALA.categoryLabel(t.category)}</td><td><span class="badge badge-neutral">${I18N.t('request.status.'+t.status)}</span></td></tr>`).join('') : `<tr><td class="text-soft" data-i18n="agentTasks.empty"></td></tr>`;
+      I18N.applyTranslations();
+    }
+    document.addEventListener('edelala:langchange', refresh);
+    refresh();
+  }
+</script>
+</body>
+</html>

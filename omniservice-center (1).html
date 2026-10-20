@@ -1,0 +1,1759 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>OMNISERVICE CENTER — One smart place for every service.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<style>
+:root{
+  --primary:#2396FF;
+  --primary-deep:#0B6FD1;
+  --ink:#0F1B2D;
+  --slate:#5B6B82;
+  --slate-light:#8A97AB;
+  --bg:#F5F8FC;
+  --surface:#FFFFFF;
+  --border:#E3E9F1;
+  --success:#1FA97A;
+  --success-bg:#E7F7F1;
+  --warning:#B9791E;
+  --warning-bg:#FCF2E1;
+  --danger:#D6442F;
+  --danger-bg:#FBEAE7;
+  --radius:14px;
+  --shadow:0 1px 2px rgba(15,27,45,.04), 0 8px 24px rgba(15,27,45,.06);
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  font-family:'Inter',sans-serif;
+  color:var(--ink);
+  background:var(--bg);
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,.display{font-family:'Sora',sans-serif;}
+a{color:inherit;text-decoration:none;}
+button{font-family:inherit;cursor:pointer;}
+img{max-width:100%;display:block;}
+::selection{background:#cfe8ff;}
+.hidden{display:none !important;}
+#app{min-height:100vh;}
+
+/* ---------- layout helpers ---------- */
+.container{max-width:1180px;margin:0 auto;padding:0 28px;}
+.row{display:flex;}
+.col{display:flex;flex-direction:column;}
+.spread{justify-content:space-between;align-items:center;}
+.gap-xs{gap:6px;} .gap-s{gap:10px;} .gap-m{gap:16px;} .gap-l{gap:28px;} .gap-xl{gap:44px;}
+.muted{color:var(--slate);}
+.small{font-size:13px;}
+.center{text-align:center;}
+
+/* ---------- buttons ---------- */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  padding:12px 22px;border-radius:10px;border:1px solid transparent;
+  font-weight:600;font-size:14.5px;transition:transform .12s ease, box-shadow .12s ease, background .12s ease;
+  white-space:nowrap;
+}
+.btn:active{transform:translateY(1px);}
+.btn-primary{background:var(--primary);color:#fff;box-shadow:0 6px 18px rgba(35,150,255,.32);}
+.btn-primary:hover{background:var(--primary-deep);}
+.btn-secondary{background:#fff;color:var(--ink);border-color:var(--border);}
+.btn-secondary:hover{border-color:var(--primary);color:var(--primary-deep);}
+.btn-ghost{background:transparent;color:var(--slate);padding:10px 14px;}
+.btn-ghost:hover{color:var(--ink);}
+.btn-danger{background:var(--danger-bg);color:var(--danger);}
+.btn-success{background:var(--success-bg);color:var(--success);}
+.btn-sm{padding:8px 14px;font-size:13px;border-radius:8px;}
+.btn-block{width:100%;}
+.btn[disabled]{opacity:.45;cursor:not-allowed;}
+
+/* ---------- badges ---------- */
+.badge{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;letter-spacing:.02em;padding:4px 9px;border-radius:100px;}
+.badge-verified{background:var(--success-bg);color:var(--success);}
+.badge-pending{background:var(--warning-bg);color:var(--warning);}
+.badge-rejected{background:var(--danger-bg);color:var(--danger);}
+.badge-demo{background:#EDF1F7;color:var(--slate);}
+.badge-sector{background:#E9F4FF;color:var(--primary-deep);}
+
+/* ---------- top marketing nav ---------- */
+.marketing-nav{position:sticky;top:0;z-index:50;background:rgba(245,248,252,.85);backdrop-filter:blur(10px);border-bottom:1px solid var(--border);}
+.marketing-nav .bar{display:flex;align-items:center;justify-content:space-between;padding:16px 0;}
+.brand{display:flex;align-items:center;gap:10px;font-family:'Sora';font-weight:700;font-size:19px;}
+.brand .mark{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,var(--primary),var(--primary-deep));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:15px;}
+
+/* ---------- hero ---------- */
+.hero{padding:64px 0 40px;}
+.hero-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:56px;align-items:center;}
+.eyebrow-line{color:var(--primary-deep);font-weight:700;font-size:13.5px;margin-bottom:14px;}
+.hero h1{font-size:52px;line-height:1.06;margin:0 0 20px;letter-spacing:-.01em;}
+.hero p.lead{font-size:18px;color:var(--slate);max-width:520px;line-height:1.55;margin-bottom:30px;}
+.hero-ctas{display:flex;gap:14px;margin-bottom:10px;}
+.hero-note{font-size:13px;color:var(--slate-light);margin-top:12px;}
+
+/* live search preview card */
+.preview-card{background:var(--surface);border:1px solid var(--border);border-radius:20px;box-shadow:var(--shadow);padding:22px;}
+.preview-topbar{display:flex;align-items:center;gap:8px;margin-bottom:16px;}
+.preview-dot{width:9px;height:9px;border-radius:50%;background:#DCE3EC;}
+.preview-label{font-size:12px;color:var(--slate-light);font-weight:600;margin-left:auto;}
+.preview-input{border:1px solid var(--border);border-radius:12px;padding:14px 16px;font-size:15px;min-height:24px;background:#FAFCFE;color:var(--ink);}
+.preview-cursor{display:inline-block;width:2px;height:16px;background:var(--primary);vertical-align:middle;margin-left:2px;animation:blink 1s step-start infinite;}
+@keyframes blink{50%{opacity:0;}}
+.preview-result{margin-top:14px;padding:14px;border-radius:12px;background:#F3F9FF;border:1px solid #DCEEFF;font-size:13.5px;opacity:0;transform:translateY(4px);transition:all .3s ease;}
+.preview-result.show{opacity:1;transform:translateY(0);}
+.preview-result b{color:var(--primary-deep);}
+.preview-providers{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;}
+.preview-chip{font-size:12px;background:#fff;border:1px solid var(--border);padding:6px 10px;border-radius:100px;color:var(--slate);}
+
+/* ---------- sections ---------- */
+.section{padding:72px 0;border-top:1px solid var(--border);}
+.section-head{max-width:620px;margin-bottom:40px;}
+.section-tag{color:var(--primary-deep);font-weight:700;font-size:13px;margin-bottom:10px;}
+.section h2{font-size:32px;margin:0 0 12px;letter-spacing:-.01em;}
+.section p.desc{color:var(--slate);font-size:16px;line-height:1.6;}
+
+.sector-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;}
+.sector-card{background:#fff;border:1px solid var(--border);border-radius:16px;padding:20px;transition:transform .15s ease, box-shadow .15s ease, border-color .15s;}
+.sector-card:hover{transform:translateY(-3px);box-shadow:var(--shadow);border-color:#cfe3fb;}
+.sector-icon{width:44px;height:44px;border-radius:11px;background:#EAF5FF;display:flex;align-items:center;justify-content:center;font-size:21px;margin-bottom:14px;}
+.sector-card h4{margin:0 0 4px;font-size:15px;}
+.sector-card p{margin:0;font-size:12.5px;color:var(--slate);}
+
+.step-row{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;}
+.step{border-left:2px solid var(--border);padding-left:16px;}
+.step .num{font-family:'Sora';font-weight:700;color:var(--primary);font-size:13px;margin-bottom:8px;}
+.step h4{margin:0 0 6px;font-size:15.5px;}
+.step p{margin:0;color:var(--slate);font-size:13.5px;line-height:1.5;}
+
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+.info-card{background:#fff;border:1px solid var(--border);border-radius:16px;padding:26px;}
+.info-card h3{margin:0 0 10px;font-size:19px;}
+.info-card p{margin:0;color:var(--slate);font-size:14.5px;line-height:1.6;}
+.check-list{margin:16px 0 0;padding:0;list-style:none;}
+.check-list li{display:flex;gap:10px;font-size:14px;color:var(--ink);margin-bottom:10px;align-items:flex-start;}
+.check-list li:before{content:"✓";color:var(--success);font-weight:700;}
+
+.footer{padding:48px 0;border-top:1px solid var(--border);}
+.footer-row{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;}
+.footer-links{display:flex;gap:22px;font-size:13.5px;color:var(--slate);}
+.footer-links a:hover{color:var(--primary-deep);}
+
+/* ---------- modal ---------- */
+.modal-backdrop{position:fixed;inset:0;background:rgba(15,27,45,.45);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;}
+.modal{background:#fff;border-radius:18px;max-width:560px;width:100%;max-height:86vh;overflow-y:auto;padding:28px;box-shadow:0 20px 60px rgba(0,0,0,.25);}
+.modal h3{margin:0 0 6px;font-size:20px;}
+.modal-close{position:absolute;top:20px;right:20px;}
+.modal-wrap{position:relative;}
+
+/* ---------- forms ---------- */
+.field{margin-bottom:16px;}
+.field label{display:block;font-size:13px;font-weight:600;margin-bottom:6px;color:var(--ink);}
+.field input, .field select, .field textarea{
+  width:100%;padding:11px 13px;border:1px solid var(--border);border-radius:10px;font-size:14px;font-family:inherit;color:var(--ink);background:#fff;
+}
+.field input:focus, .field select:focus, .field textarea:focus{outline:2px solid var(--primary);outline-offset:1px;border-color:var(--primary);}
+.field-hint{font-size:12px;color:var(--slate-light);margin-top:5px;}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+
+/* ---------- app shell (seeker/provider/admin) ---------- */
+.app-shell{display:flex;min-height:100vh;}
+.sidebar{width:236px;flex-shrink:0;background:#fff;border-right:1px solid var(--border);padding:20px 14px;display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto;}
+.sidebar .brand{padding:8px 8px 20px;cursor:pointer;font-size:16px;}
+.sidebar-nav{display:flex;flex-direction:column;gap:2px;flex:1;}
+.sidebar-link{display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:10px;font-size:14px;font-weight:600;color:var(--slate);}
+.sidebar-link:hover{background:#F3F7FC;color:var(--ink);}
+.sidebar-link.active{background:#E9F4FF;color:var(--primary-deep);}
+.sidebar-icon{width:18px;text-align:center;}
+.sidebar-section-title{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--slate-light);font-weight:700;margin:18px 0 6px 12px;}
+.sidebar-foot{border-top:1px solid var(--border);padding-top:12px;margin-top:8px;}
+.role-pill{font-size:11px;background:#F3F7FC;color:var(--slate);padding:5px 9px;border-radius:100px;display:inline-block;margin-bottom:8px;}
+
+.main{flex:1;min-width:0;padding:28px 34px 60px;}
+.main-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:26px;gap:16px;flex-wrap:wrap;}
+.main-head h1{font-size:25px;margin:0 0 6px;}
+.main-head p{margin:0;color:var(--slate);font-size:14px;}
+
+.grid-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px;}
+.stat-card{background:#fff;border:1px solid var(--border);border-radius:14px;padding:18px;}
+.stat-card .val{font-family:'Sora';font-size:26px;font-weight:700;}
+.stat-card .lbl{font-size:12.5px;color:var(--slate);margin-top:4px;}
+
+.card{background:#fff;border:1px solid var(--border);border-radius:14px;padding:20px;}
+.card + .card{margin-top:12px;}
+
+.tab-bar{display:flex;gap:6px;border-bottom:1px solid var(--border);margin-bottom:20px;flex-wrap:wrap;}
+.tab-btn{padding:10px 14px;font-size:13.5px;font-weight:600;color:var(--slate);border-bottom:2px solid transparent;background:none;border-radius:0;}
+.tab-btn.active{color:var(--primary-deep);border-color:var(--primary);}
+
+/* provider cards */
+.provider-card{background:#fff;border:1px solid var(--border);border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:10px;transition:box-shadow .15s, border-color .15s;}
+.provider-card:hover{box-shadow:var(--shadow);border-color:#cfe3fb;}
+.provider-card.highlighted{border-color:var(--primary);box-shadow:0 0 0 3px rgba(35,150,255,.14);}
+.provider-top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;}
+.provider-name{font-weight:700;font-size:15.5px;}
+.provider-meta{font-size:12.5px;color:var(--slate);display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+.provider-desc{font-size:13.5px;color:var(--slate);line-height:1.5;}
+.provider-actions{display:flex;gap:8px;margin-top:4px;}
+
+.req-item{border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:12px;}
+.req-top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;}
+.status-pill{font-size:11.5px;font-weight:700;padding:4px 10px;border-radius:100px;}
+.status-New{background:#E9F4FF;color:var(--primary-deep);}
+.status-Viewed{background:#F0F0FA;color:#5B57C7;}
+.status-Accepted{background:var(--success-bg);color:var(--success);}
+.status-Rejected{background:var(--danger-bg);color:var(--danger);}
+.status-In-Progress{background:var(--warning-bg);color:var(--warning);}
+.status-Completed{background:#E7F7F1;color:#12805E;}
+.status-Cancelled{background:#EDF1F7;color:var(--slate);}
+.timeline{margin-top:12px;border-top:1px dashed var(--border);padding-top:10px;}
+.timeline-item{font-size:12.5px;color:var(--slate);display:flex;gap:8px;margin-bottom:5px;}
+.timeline-item .dot{width:6px;height:6px;border-radius:50%;background:var(--primary);margin-top:5px;flex-shrink:0;}
+
+/* AI chat */
+.ai-shell{display:grid;grid-template-columns:1fr 380px;gap:20px;align-items:start;}
+.chat-window{background:#fff;border:1px solid var(--border);border-radius:16px;display:flex;flex-direction:column;height:70vh;}
+.chat-log{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:14px;}
+.msg{max-width:78%;padding:12px 15px;border-radius:14px;font-size:14px;line-height:1.5;}
+.msg.user{align-self:flex-end;background:var(--primary);color:#fff;border-bottom-right-radius:4px;}
+.msg.ai{align-self:flex-start;background:#F3F7FC;color:var(--ink);border-bottom-left-radius:4px;}
+.msg.ai .tag{font-size:11px;font-weight:700;color:var(--primary-deep);display:block;margin-bottom:4px;}
+.typing{align-self:flex-start;display:flex;gap:4px;padding:12px 15px;}
+.typing span{width:6px;height:6px;background:var(--slate-light);border-radius:50%;animation:bounce 1.2s infinite;}
+.typing span:nth-child(2){animation-delay:.15s;} .typing span:nth-child(3){animation-delay:.3s;}
+@keyframes bounce{0%,60%,100%{transform:translateY(0);opacity:.5;}30%{transform:translateY(-4px);opacity:1;}}
+.chat-input-row{display:flex;gap:10px;padding:14px;border-top:1px solid var(--border);}
+.chat-input-row input{flex:1;border:1px solid var(--border);border-radius:10px;padding:12px 14px;font-size:14px;}
+.chat-suggestions{display:flex;gap:8px;padding:0 14px 14px;flex-wrap:wrap;}
+.suggestion-chip{font-size:12.5px;background:#F3F7FC;border:1px solid var(--border);padding:7px 12px;border-radius:100px;color:var(--slate);}
+.suggestion-chip:hover{border-color:var(--primary);color:var(--primary-deep);}
+.ai-side-panel{background:#fff;border:1px solid var(--border);border-radius:16px;padding:18px;max-height:70vh;overflow-y:auto;}
+
+/* map */
+.map-shell{display:grid;grid-template-columns:300px 1fr;gap:16px;height:74vh;}
+#leaflet-map, .leaflet-map-el{width:100%;height:100%;border-radius:14px;border:1px solid var(--border);}
+.map-filters{background:#fff;border:1px solid var(--border);border-radius:14px;padding:16px;overflow-y:auto;}
+.filter-chip-list{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
+.filter-chip{font-size:12px;padding:6px 10px;border-radius:100px;border:1px solid var(--border);background:#fff;color:var(--slate);}
+.filter-chip.active{background:var(--primary);color:#fff;border-color:var(--primary);}
+
+.toast-root{position:fixed;bottom:22px;right:22px;z-index:400;display:flex;flex-direction:column;gap:10px;}
+.toast{background:var(--ink);color:#fff;padding:13px 18px;border-radius:10px;font-size:13.5px;box-shadow:0 10px 30px rgba(0,0,0,.25);animation:toastIn .25s ease;}
+@keyframes toastIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+
+.demo-switcher{position:fixed;bottom:18px;left:18px;background:#0F1B2D;color:#fff;border-radius:14px;padding:12px 14px;font-size:12.5px;z-index:300;box-shadow:0 10px 30px rgba(0,0,0,.3);max-width:250px;}
+.demo-switcher b{display:block;margin-bottom:8px;font-size:12px;color:#9FCBFF;}
+.demo-switcher .row{gap:6px;flex-wrap:wrap;}
+.demo-switcher button{background:#1C2C42;color:#fff;border:1px solid #2C3F58;padding:6px 9px;border-radius:8px;font-size:11.5px;}
+.demo-switcher button.on{background:var(--primary);border-color:var(--primary);}
+.demo-switcher .close-x{position:absolute;top:8px;right:10px;color:#8A97AB;cursor:pointer;font-size:14px;}
+
+.empty-state{text-align:center;padding:50px 20px;color:var(--slate);}
+.empty-state .ico{font-size:34px;margin-bottom:10px;}
+
+.avatar-circle{width:34px;height:34px;border-radius:9px;background:#EAF5FF;color:var(--primary-deep);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0;}
+
+table.admin-table{width:100%;border-collapse:collapse;font-size:13.5px;}
+table.admin-table th{text-align:left;color:var(--slate);font-weight:600;padding:9px 10px;border-bottom:1px solid var(--border);font-size:12px;text-transform:uppercase;letter-spacing:.03em;}
+table.admin-table td{padding:11px 10px;border-bottom:1px solid var(--border);vertical-align:top;}
+table.admin-table tr:last-child td{border-bottom:none;}
+
+.rating-stars{color:#E2A93B;font-size:13px;letter-spacing:1px;}
+
+.info-banner{background:#F3F9FF;border:1px solid #DCEEFF;border-radius:12px;padding:13px 16px;font-size:13px;color:var(--slate);margin-bottom:16px;}
+
+@media (max-width:980px){
+  .hero-grid{grid-template-columns:1fr;}
+  .sector-grid{grid-template-columns:repeat(2,1fr);}
+  .step-row{grid-template-columns:repeat(2,1fr);}
+  .two-col{grid-template-columns:1fr;}
+  .ai-shell{grid-template-columns:1fr;}
+  .map-shell{grid-template-columns:1fr;height:auto;}
+  #leaflet-map, .leaflet-map-el{height:420px;}
+  .app-shell{flex-direction:column;}
+  .sidebar{width:100%;height:auto;position:relative;flex-direction:row;overflow-x:auto;}
+  .sidebar-nav{flex-direction:row;}
+  .sidebar-section-title{display:none;}
+  .main{padding:22px 16px 60px;}
+}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div class="toast-root" id="toastRoot"></div>
+
+<script>
+/* =====================================================================
+   OMNISERVICE CENTER — working prototype
+   Client-side SPA. "Backend" = shared persistent artifact storage.
+   OMNI AI = deterministic keyword/synonym engine + Claude API fallback.
+   Map = real Leaflet + OpenStreetMap.
+   ===================================================================== */
+
+/* ---------------------------- DATA CATALOG ---------------------------- */
+const SECTORS = [
+  {id:'it', name:'IT & Technology', icon:'💻', desc:'Repairs, networks, software & web development'},
+  {id:'transport', name:'Transportation', icon:'🚗', desc:'Taxis, transfers, rentals & vehicle repair'},
+  {id:'telecom', name:'Telecommunications', icon:'📶', desc:'Internet, SIM & connectivity services'},
+  {id:'gov', name:'Government Services', icon:'🏛️', desc:'IDs, permits & public registration help'},
+  {id:'education', name:'Education', icon:'🎓', desc:'Tutoring, exam prep & tech training'},
+  {id:'health', name:'Healthcare', icon:'🏥', desc:'Clinics, pharmacies & dental care'},
+  {id:'realestate', name:'Real Estate', icon:'🏠', desc:'Renting, moving & property management'},
+  {id:'business', name:'Business & Consulting', icon:'💼', desc:'Legal, accounting & business advice'},
+  {id:'shopping', name:'Shopping & Supermarkets', icon:'🛒', desc:'Groceries, delivery & retail'},
+  {id:'agriculture', name:'Agriculture', icon:'🌾', desc:'Farm inputs, equipment & veterinary care'},
+  {id:'events', name:'Events & Media', icon:'🎬', desc:'Planning, catering & production'},
+  {id:'ngo', name:'NGOs & Community Services', icon:'🤝', desc:'Community programs & social support'},
+];
+
+const SERVICES = [
+  {id:'it-computer-repair', sectorId:'it', name:'Computer & Laptop Repair', keywords:['computer','laptop','pc','desktop','monitor','keyboard','won\'t start','wont start','not working','virus','slow computer','windows','boot','screen frozen','blue screen']},
+  {id:'it-phone-repair', sectorId:'it', name:'Phone & Device Repair', keywords:['phone','mobile','smartphone','cracked screen','charging port','battery','android','iphone','display broken','touch screen']},
+  {id:'it-networking', sectorId:'it', name:'Networking & Wi-Fi Setup', keywords:['wifi','wi-fi','network','router','internet not working','lan','networking','no internet']},
+  {id:'it-web-dev', sectorId:'it', name:'Web & Software Development', keywords:['website','web app','software developer','app development','build a website','build an app','online store']},
+  {id:'it-software-install', sectorId:'it', name:'Software Install & Data Recovery', keywords:['install software','data recovery','lost files','recover data','reinstall windows','deleted files']},
+  {id:'transport-taxi', sectorId:'transport', name:'Local Taxi & Ride', keywords:['taxi','ride','need a ride','pick me up','drop me','get around town','local transport']},
+  {id:'transport-airport', sectorId:'transport', name:'Airport Transfer', keywords:['airport','flight','pick up from airport','airport transfer','catch a flight']},
+  {id:'transport-carrental', sectorId:'transport', name:'Car Rental', keywords:['rent a car','car rental','hire a car','rental vehicle']},
+  {id:'transport-vehiclerepair', sectorId:'transport', name:'Vehicle Repair & Towing', keywords:['car broke down','engine problem','flat tire','towing','mechanic','car repair','vehicle wont start','wont start car']},
+  {id:'telecom-internet', sectorId:'telecom', name:'Home & Business Internet', keywords:['internet package','broadband','home internet','office internet','connectivity']},
+  {id:'telecom-sim', sectorId:'telecom', name:'SIM & Mobile Services', keywords:['sim card','mobile line','phone number','mobile data package','new sim']},
+  {id:'gov-idcivil', sectorId:'gov', name:'ID & Civil Registration', keywords:['id card','kebele id','birth certificate','civil registration','national id','lost my id']},
+  {id:'gov-licensing', sectorId:'gov', name:'Permits & Business Licensing', keywords:['business license','permit','trade registration','licensing office']},
+  {id:'edu-tutoring', sectorId:'education', name:'Tutoring & Exam Prep', keywords:['tutor','tutoring','exam prep','homework help','study help','failing a class']},
+  {id:'edu-coding', sectorId:'education', name:'Coding & Tech Training', keywords:['learn to code','coding class','programming course','tech training','learn programming']},
+  {id:'health-clinic', sectorId:'health', name:'Clinics & General Care', keywords:['sick','fever','clinic','doctor','not feeling well','checkup','stomach ache','headache']},
+  {id:'health-pharmacy', sectorId:'health', name:'Pharmacy', keywords:['medicine','pharmacy','prescription','need medication','drugs']},
+  {id:'health-dental', sectorId:'health', name:'Dental Care', keywords:['tooth','teeth','dentist','toothache','dental']},
+  {id:'re-rent', sectorId:'realestate', name:'Property Rental', keywords:['rent a house','apartment for rent','find a house','rental property','looking for an apartment']},
+  {id:'re-moving', sectorId:'realestate', name:'Home Moving', keywords:['moving house','movers','relocate','moving service','moving apartment']},
+  {id:'biz-consulting', sectorId:'business', name:'Business Consulting', keywords:['business plan','business advice','start a business','consulting','grow my business']},
+  {id:'biz-legalaccounting', sectorId:'business', name:'Legal & Accounting', keywords:['legal advice','accountant','tax help','bookkeeping','lawyer','contract review']},
+  {id:'shop-grocerydelivery', sectorId:'shopping', name:'Grocery & Delivery', keywords:['grocery','groceries','delivery','order food items','supermarket delivery']},
+  {id:'agri-support', sectorId:'agriculture', name:'Agricultural Inputs & Support', keywords:['seeds','fertilizer','farming equipment','farm supplies','irrigation']},
+  {id:'agri-vet', sectorId:'agriculture', name:'Veterinary & Livestock Care', keywords:['sick cow','livestock','veterinarian','animal health','vet','sick animal']},
+  {id:'events-catering', sectorId:'events', name:'Event Planning & Catering', keywords:['event','wedding','catering','party planning','venue','photographer for event']},
+  {id:'ngo-community', sectorId:'ngo', name:'Community & Development Programs', keywords:['community program','volunteer','ngo','nonprofit help','development program']},
+];
+
+function svc(id){return SERVICES.find(s=>s.id===id);}
+function sectorOf(id){return SECTORS.find(s=>s.id===id);}
+
+const GONDAR_CENTER = {lat:12.6000, lng:37.4667};
+
+const SEED_PROVIDERS = [
+  {id:'p1', name:'Gondar Tech Fix Center', sectorId:'it', serviceIds:['it-computer-repair','it-phone-repair'], lat:12.6084, lng:37.4661, address:'Piassa, Gondar', hours:'Mon–Sat 8:30–19:00', phone:'+251 91 000 0001', priceInfo:'Diagnosis free · repairs from 300 ETB', desc:'Walk-in repair shop for laptops, desktops and phones. Screen, battery and software fixes.', verification:'Verified'},
+  {id:'p2', name:'Semien PC & Mobile Clinic', sectorId:'it', serviceIds:['it-computer-repair','it-software-install'], lat:12.5975, lng:37.4589, address:'Arada area, Gondar', hours:'Mon–Sat 9:00–18:00', phone:'+251 91 000 0002', priceInfo:'Quote after inspection', desc:'Data recovery and OS reinstalls alongside general hardware repair.', verification:'Pending'},
+  {id:'p3', name:'Blue Nile Web & Networks', sectorId:'it', serviceIds:['it-networking','it-web-dev'], lat:12.6142, lng:37.4703, address:'Azezo road, Gondar', hours:'Mon–Fri 9:00–17:30', phone:'+251 91 000 0003', priceInfo:'Websites from 8,000 ETB', desc:'Small-business websites and office Wi-Fi / network setup.', verification:'Verified'},
+  {id:'p4', name:'Ras Dashen Taxi & Transport', sectorId:'transport', serviceIds:['transport-taxi'], lat:12.6070, lng:37.4640, address:'Central Gondar', hours:'24 hours', phone:'+251 91 000 0004', priceInfo:'Metered fares', desc:'On-demand local taxi service covering central Gondar.', verification:'Verified'},
+  {id:'p5', name:'Simien Auto Garage', sectorId:'transport', serviceIds:['transport-vehiclerepair'], lat:12.5890, lng:37.4555, address:'Industry road, Gondar', hours:'Mon–Sat 8:00–18:00', phone:'+251 91 000 0005', priceInfo:'Callout fee 250 ETB', desc:'Roadside towing and general vehicle repair.', verification:'Verified'},
+  {id:'p6', name:'Gondar Airport Transfer Co.', sectorId:'transport', serviceIds:['transport-airport','transport-carrental'], lat:12.5205, lng:37.4342, address:'Azezo, near Gondar Airport', hours:'Flight hours', phone:'+251 91 000 0006', priceInfo:'Fixed fare to town center', desc:'Airport pickup/drop-off and short-term car rental.', verification:'Pending'},
+  {id:'p7', name:'Fasilides Connect Internet Services', sectorId:'telecom', serviceIds:['telecom-internet','telecom-sim'], lat:12.6110, lng:37.4682, address:'Piassa, Gondar', hours:'Mon–Sat 8:30–18:00', phone:'+251 91 000 0007', priceInfo:'Packages from 800 ETB/mo', desc:'Independent reseller of home and office internet packages.', verification:'Verified'},
+  {id:'p8', name:'Gondar Registrar & Licensing Help Desk', sectorId:'gov', serviceIds:['gov-licensing'], lat:12.6050, lng:37.4660, address:'Municipal building area', hours:'Mon–Fri 8:30–16:30', phone:'+251 91 000 0008', priceInfo:'Service fee varies by permit', desc:'Assists individuals and small businesses in preparing licensing paperwork.', verification:'Verified'},
+  {id:'p9', name:'Kebele ID & Civil Registration Aide', sectorId:'gov', serviceIds:['gov-idcivil'], lat:12.6020, lng:37.4700, address:'Kebele 08 area', hours:'Mon–Fri 8:30–16:30', phone:'+251 91 000 0009', priceInfo:'Assistance fee 100 ETB', desc:'Helps residents prepare and file ID / civil registration paperwork.', verification:'Pending'},
+  {id:'p10', name:'Gondar Bright Minds Tutoring', sectorId:'education', serviceIds:['edu-tutoring'], lat:12.5940, lng:37.4610, address:'Near Gondar Secondary School', hours:'Mon–Sat 14:00–19:00', phone:'+251 91 000 0010', priceInfo:'From 200 ETB/session', desc:'Subject tutoring and exam preparation for high-school students.', verification:'Verified'},
+  {id:'p11', name:'Fasil Coding Academy', sectorId:'education', serviceIds:['edu-coding'], lat:12.6100, lng:37.4640, address:'Piassa, Gondar', hours:'Mon–Sat 9:00–17:00', phone:'+251 91 000 0011', priceInfo:'Courses from 3,000 ETB', desc:'Beginner and intermediate programming courses.', verification:'Verified'},
+  {id:'p12', name:'Gondar Referral Support Clinic (Demo)', sectorId:'health', serviceIds:['health-clinic'], lat:12.5847, lng:37.4593, address:'Near University of Gondar campus', hours:'24 hours', phone:'+251 91 000 0012', priceInfo:'Consultation from 150 ETB', desc:'General outpatient clinic care. For emergencies always contact local emergency services directly.', verification:'Verified'},
+  {id:'p13', name:'Lalibela Family Pharmacy', sectorId:'health', serviceIds:['health-pharmacy'], lat:12.6060, lng:37.4650, address:'Piassa, Gondar', hours:'Mon–Sun 8:00–21:00', phone:'+251 91 000 0013', priceInfo:'Standard retail pricing', desc:'Neighborhood pharmacy with prescription and over-the-counter medicine.', verification:'Verified'},
+  {id:'p14', name:'Gondar Smile Dental Care', sectorId:'health', serviceIds:['health-dental'], lat:12.6005, lng:37.4670, address:'Central Gondar', hours:'Mon–Sat 9:00–17:00', phone:'+251 91 000 0014', priceInfo:'Checkup from 250 ETB', desc:'General dentistry and checkups.', verification:'Pending'},
+  {id:'p15', name:'Piassa Realty & Property Group', sectorId:'realestate', serviceIds:['re-rent'], lat:12.6091, lng:37.4668, address:'Piassa, Gondar', hours:'Mon–Sat 9:00–18:00', phone:'+251 91 000 0015', priceInfo:'Commission-based', desc:'Rental listings and viewing arrangements across Gondar.', verification:'Verified'},
+  {id:'p16', name:'Gondar Home Movers', sectorId:'realestate', serviceIds:['re-moving'], lat:12.5960, lng:37.4600, address:'Arada area, Gondar', hours:'Mon–Sat 8:00–18:00', phone:'+251 91 000 0016', priceInfo:'Quote by home size', desc:'Local moving and light logistics for households.', verification:'Rejected'},
+  {id:'p17', name:'North Gondar Business Consultants', sectorId:'business', serviceIds:['biz-consulting'], lat:12.6030, lng:37.4655, address:'Central Gondar', hours:'Mon–Fri 9:00–17:00', phone:'+251 91 000 0017', priceInfo:'Free first consultation', desc:'Business planning and small-enterprise advisory.', verification:'Verified'},
+  {id:'p18', name:'Semien Legal & Accounting Partners', sectorId:'business', serviceIds:['biz-legalaccounting'], lat:12.6075, lng:37.4630, address:'Piassa, Gondar', hours:'Mon–Fri 9:00–17:00', phone:'+251 91 000 0018', priceInfo:'Hourly rate on request', desc:'Legal consultation and bookkeeping services for individuals and SMEs.', verification:'Verified'},
+  {id:'p19', name:'Gondar Fresh Market Delivery', sectorId:'shopping', serviceIds:['shop-grocerydelivery'], lat:12.6045, lng:37.4675, address:'Central market, Gondar', hours:'Mon–Sun 7:00–20:00', phone:'+251 91 000 0019', priceInfo:'Delivery fee 50 ETB', desc:'Same-day grocery delivery from the central market.', verification:'Pending'},
+  {id:'p20', name:'Amhara AgriSupport Cooperative', sectorId:'agriculture', serviceIds:['agri-support'], lat:12.5800, lng:37.4500, address:'Azezo outskirts', hours:'Mon–Sat 8:00–17:00', phone:'+251 91 000 0020', priceInfo:'Seasonal pricing', desc:'Seeds, fertilizer and small equipment for local farmers.', verification:'Verified'},
+  {id:'p21', name:'Gondar Vet & Livestock Care', sectorId:'agriculture', serviceIds:['agri-vet'], lat:12.5850, lng:37.4480, address:'Azezo outskirts', hours:'Mon–Sat 8:00–17:00', phone:'+251 91 000 0021', priceInfo:'Callout from 200 ETB', desc:'Veterinary visits and livestock health support.', verification:'Verified'},
+  {id:'p22', name:'Castle View Events & Catering', sectorId:'events', serviceIds:['events-catering'], lat:12.6095, lng:37.4690, address:'Near Fasil Ghebbi, Gondar', hours:'By appointment', phone:'+251 91 000 0022', priceInfo:'Packages from 15,000 ETB', desc:'Event planning, catering and venue coordination.', verification:'Verified'},
+  {id:'p23', name:'Gondar Community Development Initiative', sectorId:'ngo', serviceIds:['ngo-community'], lat:12.6000, lng:37.4620, address:'Central Gondar', hours:'Mon–Fri 9:00–17:00', phone:'+251 91 000 0023', priceInfo:'Free / donation-based', desc:'Local community programs and volunteer coordination.', verification:'Verified'},
+];
+
+/* ---------------------------- STORAGE / DB ---------------------------- */
+const DB_KEY = 'omniservice:db:v1';
+const SESSION_KEY = 'omniservice:session:v1';
+let DB = null;
+let SESSION = {role:null, seekerId:null, providerId:null, isAdmin:false};
+
+function uid(prefix){return prefix+'_'+Math.random().toString(36).slice(2,9)+Date.now().toString(36).slice(-4);}
+function nowISO(){return new Date().toISOString();}
+
+function freshDB(){
+  return {
+    providers: JSON.parse(JSON.stringify(SEED_PROVIDERS)),
+    seekers: [],
+    requests: [],
+    deals: [],
+    reviews: [],
+    auditLog: [{id:uid('log'), ts:nowISO(), actor:'System', action:'Platform initialized with seed demo data.'}],
+  };
+}
+
+async function loadDB(){
+  try{
+    const res = await window.storage.get(DB_KEY, true);
+    DB = JSON.parse(res.value);
+  }catch(e){
+    DB = freshDB();
+    await saveDB();
+  }
+}
+async function saveDB(){
+  try{ await window.storage.set(DB_KEY, JSON.stringify(DB), true); }
+  catch(e){ console.error('DB save failed', e); }
+}
+async function loadSession(){
+  try{
+    const res = await window.storage.get(SESSION_KEY, false);
+    SESSION = JSON.parse(res.value);
+  }catch(e){ SESSION = {role:null, seekerId:null, providerId:null, isAdmin:false}; }
+}
+async function saveSession(){
+  try{ await window.storage.set(SESSION_KEY, JSON.stringify(SESSION), false); }
+  catch(e){ console.error('Session save failed', e); }
+}
+
+function log(action){ DB.auditLog.unshift({id:uid('log'), ts:nowISO(), actor: state.view.startsWith('admin')?'Admin':(SESSION.role||'System'), action}); }
+
+function currentSeeker(){ return DB.seekers.find(s=>s.id===SESSION.seekerId) || null; }
+function currentProvider(){ return DB.providers.find(p=>p.id===SESSION.providerId) || null; }
+
+/* ---------------------------- APP STATE ---------------------------- */
+const state = {
+  view:'landing',
+  sub:{}, // scratch state per view (selected sector, provider, chat log, etc.)
+  seekerNav:'home',
+  providerNav:'dashboard',
+  adminNav:'dashboard',
+  showDemoSwitcher:true,
+};
+
+/* ---------------------------- UTIL ---------------------------- */
+function haversine(a,b){
+  const R=6371, toRad=d=>d*Math.PI/180;
+  const dLat=toRad(b.lat-a.lat), dLng=toRad(b.lng-a.lng);
+  const x=Math.sin(dLat/2)**2 + Math.cos(toRad(a.lat))*Math.cos(toRad(b.lat))*Math.sin(dLng/2)**2;
+  return R*2*Math.atan2(Math.sqrt(x), Math.sqrt(1-x));
+}
+function fmtKm(km){ return km<1 ? Math.round(km*1000)+' m' : km.toFixed(1)+' km'; }
+function fmtDate(iso){ const d=new Date(iso); return d.toLocaleDateString(undefined,{month:'short',day:'numeric'}) + ' · ' + d.toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'}); }
+function esc(str){ return (str||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function initials(name){ return (name||'?').split(' ').filter(Boolean).slice(0,2).map(w=>w[0]).join('').toUpperCase(); }
+
+function toast(msg){
+  const root=document.getElementById('toastRoot');
+  const el=document.createElement('div');
+  el.className='toast'; el.textContent=msg;
+  root.appendChild(el);
+  setTimeout(()=>{ el.style.opacity='0'; el.style.transition='opacity .3s'; setTimeout(()=>el.remove(),300); }, 3200);
+}
+
+function getSeekerLocation(){
+  return new Promise(resolve=>{
+    if(state._geoResult){ resolve(state._geoResult); return; }
+    if(!navigator.geolocation){ state._geoResult={lat:GONDAR_CENTER.lat,lng:GONDAR_CENTER.lng,approx:true}; resolve(state._geoResult); return; }
+    navigator.geolocation.getCurrentPosition(
+      pos=>{ state._geoResult={lat:pos.coords.latitude,lng:pos.coords.longitude,approx:false}; resolve(state._geoResult); },
+      ()=>{ state._geoResult={lat:GONDAR_CENTER.lat,lng:GONDAR_CENTER.lng,approx:true}; resolve(state._geoResult); },
+      {timeout:4000}
+    );
+  });
+}
+
+function providerAvgRating(providerId){
+  const rs = DB.reviews.filter(r=>r.providerId===providerId && r.moderation==='approved');
+  if(!rs.length) return null;
+  return rs.reduce((a,r)=>a+r.rating,0)/rs.length;
+}
+function starString(avg){
+  if(avg==null) return null;
+  const full = Math.round(avg);
+  return '★★★★★☆☆☆☆☆'.slice(5-full,10-full);
+}
+
+function rankProviders(candidates, seekerLoc){
+  return candidates.map(p=>{
+    const dist = seekerLoc ? haversine(seekerLoc,{lat:p.lat,lng:p.lng}) : null;
+    const avg = providerAvgRating(p.id);
+    let score = 0;
+    if(p.verification==='Verified') score += 3;
+    if(avg!=null) score += avg;
+    if(dist!=null) score -= Math.min(dist*0.15, 3);
+    return {...p, _dist:dist, _avg:avg, _score:score};
+  }).sort((a,b)=>b._score-a._score);
+}
+
+/* ---------------------------- OMNI AI ENGINE ---------------------------- */
+function keywordMatch(text){
+  const t = text.toLowerCase();
+  const scored = SERVICES.map(s=>{
+    let score = 0;
+    s.keywords.forEach(k=>{ if(t.includes(k)) score += k.split(' ').length; });
+    return {service:s, score};
+  }).filter(s=>s.score>0).sort((a,b)=>b.score-a.score);
+  return scored;
+}
+
+async function claudeFallback(text){
+  const catalog = SERVICES.map(s=>`${s.id}: ${s.name} (sector: ${sectorOf(s.sectorId).name})`).join('\n');
+  const sys = `You are OMNI AI, a service-intent classifier for OMNISERVICE CENTER, a service-discovery platform in Gondar, Ethiopia. Given a user's natural-language message, pick the single best matching service from this exact catalog (use the id exactly as written), or return null if nothing fits well or the message is unrelated to finding a service. Respond with ONLY raw JSON, no markdown fences, no commentary, in this exact shape:
+{"serviceId": "<id-from-catalog-or-null>", "reply": "<one short, warm sentence, under 25 words, describing what you understood>", "clarifyingQuestion": "<a short clarifying question, or null if confident>"}
+
+Catalog:
+${catalog}`;
+  try{
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({
+        model:"claude-sonnet-4-6",
+        max_tokens:300,
+        system: sys,
+        messages:[{role:"user", content:text}]
+      })
+    });
+    const data = await response.json();
+    const raw = (data.content||[]).map(b=>b.text||'').join('').trim();
+    const clean = raw.replace(/```json|```/g,'').trim();
+    const parsed = JSON.parse(clean);
+    if(parsed.serviceId && !svc(parsed.serviceId)) parsed.serviceId = null; // never trust an invented id
+    return {ok:true, ...parsed};
+  }catch(e){
+    return {ok:false, serviceId:null, reply:"I'm having trouble reaching the language model right now, so I'll rely on keyword matching only.", clarifyingQuestion:"Could you tell me, in a few words, what kind of help you need?"};
+  }
+}
+
+/* main entry: returns a result object the chat UI renders */
+async function omniAIProcess(text){
+  const matches = keywordMatch(text);
+  if(matches.length && (matches.length===1 || matches[0].score > matches[1].score)){
+    return { mode:'keyword', service: matches[0].service, reply:null };
+  }
+  if(matches.length >= 2 && matches[0].score === matches[1].score){
+    const opts = matches.slice(0,3).map(m=>m.service.name).join(', ');
+    return { mode:'clarify-tie', options: matches.slice(0,3).map(m=>m.service), reply:`I found a couple of possible matches — ${opts}. Which one fits best?` };
+  }
+  const llm = await claudeFallback(text);
+  if(llm.serviceId){
+    return { mode:'llm', service: svc(llm.serviceId), reply: llm.reply };
+  }
+  return { mode:'clarify-llm', reply: llm.reply || "I'm not fully sure what you need yet.", question: llm.clarifyingQuestion || "Could you describe the problem in a bit more detail?" };
+}
+
+/* ---------------------------- RENDER: ROOT ---------------------------- */
+function render(){
+  const app = document.getElementById('app');
+  let html = '';
+  if(state.view==='landing') html = renderLanding();
+  else if(state.view==='roleSelect') html = renderRoleSelect();
+  else if(state.view==='seekerOnboard') html = renderSeekerOnboard();
+  else if(state.view==='providerOnboard') html = renderProviderOnboard();
+  else if(state.view==='adminLogin') html = renderAdminLogin();
+  else if(state.view==='seeker') html = renderSeekerApp();
+  else if(state.view==='provider') html = renderProviderApp();
+  else if(state.view==='admin') html = renderAdminApp();
+  app.innerHTML = html + renderModal() + renderDemoSwitcher();
+  afterRender();
+  window.scrollTo({top:0});
+}
+
+/* ---------------------------- LANDING PAGE ---------------------------- */
+function renderLanding(){
+  return `
+  <div class="marketing-nav"><div class="container bar">
+    <div class="brand"><div class="mark">OS</div> OMNISERVICE CENTER</div>
+    <div class="row gap-m" style="align-items:center;">
+      <a class="btn-ghost btn small" data-action="scrollTo" data-target="how-it-works">How it works</a>
+      <a class="btn-ghost btn small" data-action="scrollTo" data-target="ai-section">OMNI AI</a>
+      <button class="btn btn-secondary btn-sm" data-action="go" data-view="roleSelect">Explore Services</button>
+      <button class="btn btn-primary btn-sm" data-action="go" data-view="roleSelect">Get Started</button>
+    </div>
+  </div></div>
+
+  <section class="hero"><div class="container hero-grid">
+    <div>
+      <div class="eyebrow-line">University of Gondar STEM Local Science Fair · Digital Technology &amp; Software Development</div>
+      <h1>One smart place<br/>for every service.</h1>
+      <p class="lead">Finding a trustworthy provider today means checking several apps, calling around, and relying on word of mouth. OMNISERVICE CENTER brings service seekers, providers and verification into one connected, intelligent ecosystem.</p>
+      <div class="hero-ctas">
+        <button class="btn btn-primary" data-action="go" data-view="roleSelect">Get Started</button>
+        <button class="btn btn-secondary" data-action="scrollTo" data-target="sectors-section">Explore Services</button>
+      </div>
+      <div class="hero-note">Working prototype · demo data clearly labeled · built for the Gondar service ecosystem</div>
+    </div>
+    <div class="preview-card">
+      <div class="preview-topbar"><span class="preview-dot"></span><span class="preview-dot"></span><span class="preview-dot"></span><span class="preview-label">OMNI AI · illustrative preview</span></div>
+      <div class="preview-input" id="heroTypeTarget">&nbsp;</div>
+      <div class="preview-result" id="heroResult">
+        <b>Computer Repair</b> identified · providers found nearby
+        <div class="preview-providers">
+          <span class="preview-chip">📍 Gondar Tech Fix Center</span>
+          <span class="preview-chip">📍 Semien PC &amp; Mobile Clinic</span>
+        </div>
+      </div>
+    </div>
+  </div></section>
+
+  <section class="section" id="problem-section"><div class="container">
+    <div class="section-head">
+      <div class="section-tag">The problem</div>
+      <h2>Service access is fragmented</h2>
+      <p class="desc">People searching for a service today check multiple sources, contact different businesses one by one, and compare scattered, inconsistent information — often relying on personal recommendations instead of verified data. At the same time, many capable local service providers stay invisible to the customers who need them.</p>
+    </div>
+    <div class="two-col">
+      <div class="info-card">
+        <h3>For service seekers</h3>
+        <p>Discovering a suitable, nearby, verified provider shouldn't require asking five people or scrolling through unrelated results.</p>
+      </div>
+      <div class="info-card">
+        <h3>For service providers</h3>
+        <p>A reliable local business often has no structured digital channel to reach relevant customers or manage incoming requests.</p>
+      </div>
+    </div>
+  </div></section>
+
+  <section class="section" id="sectors-section"><div class="container">
+    <div class="section-head">
+      <div class="section-tag">Coverage</div>
+      <h2>Twelve service sectors, one platform</h2>
+      <p class="desc">Every request on OMNISERVICE CENTER is organized under a clear sector and service taxonomy — the same structure the matching engine and provider database both use.</p>
+    </div>
+    <div class="sector-grid">
+      ${SECTORS.map(s=>`
+        <div class="sector-card" data-action="go" data-view="roleSelect">
+          <div class="sector-icon">${s.icon}</div>
+          <h4>${s.name}</h4>
+          <p>${s.desc}</p>
+        </div>`).join('')}
+    </div>
+  </div></section>
+
+  <section class="section" id="ai-section"><div class="container">
+    <div class="section-head">
+      <div class="section-tag">The core differentiator</div>
+      <h2>OMNI AI understands service intent</h2>
+      <p class="desc">Type a problem in plain language. OMNI AI uses keyword and synonym matching first — fast and fully explainable — and falls back to a language model only when a request is genuinely ambiguous. It never invents a provider: every result comes from the real provider database.</p>
+    </div>
+    <div class="two-col">
+      <div class="info-card">
+        <h3>How it decides</h3>
+        <ul class="check-list">
+          <li>Keyword &amp; synonym groups map plain language to a service</li>
+          <li>Ties or unmatched phrasing trigger a short clarifying question</li>
+          <li>Genuinely ambiguous text falls back to an LLM classifier, constrained to the real service catalog</li>
+          <li>The AI can never fabricate a provider or a result</li>
+        </ul>
+      </div>
+      <div class="info-card">
+        <h3>Try it after you sign in</h3>
+        <p>Once you enter as a Service Seeker, open <b>OMNI AI</b> from the sidebar and describe any problem — "my laptop won't start," "I need a plumber," "help me find a tutor" — and watch it identify a service, rank real demo providers, and place them on a live map.</p>
+      </div>
+    </div>
+  </div></section>
+
+  <section class="section" id="map-section"><div class="container">
+    <div class="section-head">
+      <div class="section-tag">Location intelligence</div>
+      <h2>A real interactive map, not a picture</h2>
+      <p class="desc">Provider locations are plotted with Leaflet and OpenStreetMap. Selecting a provider from OMNI AI, a sector list, or the map itself always resolves to the same canonical provider record — AI result, map marker and provider profile are never out of sync.</p>
+    </div>
+  </div></section>
+
+  <section class="section" id="how-it-works"><div class="container">
+    <div class="section-head">
+      <div class="section-tag">How it works</div>
+      <h2>From need to service, in one flow</h2>
+    </div>
+    <div class="step-row">
+      <div class="step"><div class="num">01</div><h4>Describe the need</h4><p>Use OMNI AI or browse the 12 sectors directly.</p></div>
+      <div class="step"><div class="num">02</div><h4>Get matched</h4><p>The matching engine ranks real, database-backed providers.</p></div>
+      <div class="step"><div class="num">03</div><h4>See it on the map</h4><p>Compare distance, hours and verification status.</p></div>
+      <div class="step"><div class="num">04</div><h4>Request &amp; track</h4><p>Send a request and follow its status through to completion.</p></div>
+    </div>
+  </div></section>
+
+  <section class="section"><div class="container">
+    <div class="two-col">
+      <div class="info-card">
+        <h3>For service seekers</h3>
+        <p>Search naturally, compare verified providers, and track every request from submission to completion in one place.</p>
+      </div>
+      <div class="info-card">
+        <h3>For service providers</h3>
+        <p>Get a structured profile, appear in relevant searches, manage incoming requests, and run deals — all without needing your own website.</p>
+      </div>
+    </div>
+  </div></section>
+
+  <section class="section"><div class="container">
+    <div class="section-head">
+      <div class="section-tag">Trust</div>
+      <h2>Verification &amp; honesty by design</h2>
+      <p class="desc">Providers are shown as Verified, Pending or Rejected — never overstated. This prototype uses clearly labeled demo provider records so no real business's data, ratings or affiliation is misrepresented.</p>
+    </div>
+  </div></section>
+
+  <section class="section"><div class="container">
+    <div class="section-head">
+      <div class="section-tag">Context</div>
+      <h2>Built for the Ethiopian service ecosystem</h2>
+      <p class="desc">The sector taxonomy, provider fields, and demo dataset are grounded in how services are actually organized and requested locally in Gondar — with room to connect official government and telecom channels as external, clearly-labeled destinations rather than absorbing them as OMNISERVICE-owned services.</p>
+    </div>
+  </div></section>
+
+  <section class="section"><div class="container center">
+    <h2 style="max-width:560px;margin:0 auto 16px;">Ready to see it work end to end?</h2>
+    <p class="desc" style="max-width:520px;margin:0 auto 26px;">Enter as a Seeker, a Provider, or the Admin Portal — all three are live and connected to the same shared demo database.</p>
+    <button class="btn btn-primary" data-action="go" data-view="roleSelect">Get Started</button>
+  </div></section>
+
+  <div class="footer"><div class="container footer-row">
+    <div class="brand" style="font-size:15px;"><div class="mark" style="width:28px;height:28px;font-size:12px;">OS</div> OMNISERVICE CENTER</div>
+    <div class="footer-links">
+      <a data-action="openAbout">About this prototype</a>
+      <a data-action="go" data-view="adminLogin">Administrator login</a>
+    </div>
+    <div class="small muted">Prototype for a local science fair · demo data throughout</div>
+  </div></div>
+  `;
+}
+
+function startHeroTyping(){
+  const target = document.getElementById('heroTypeTarget');
+  const resultEl = document.getElementById('heroResult');
+  if(!target) return;
+  const phrases = ["My laptop won't turn on…", "I need a tutor for my son…", "Find a verified dentist nearby…"];
+  let pi=0, ci=0, deleting=false;
+  clearInterval(state._heroTimer);
+  function tick(){
+    const phrase = phrases[pi];
+    if(!deleting){
+      ci++;
+      target.innerHTML = esc(phrase.slice(0,ci)) + '<span class="preview-cursor"></span>';
+      if(ci===phrase.length){
+        resultEl && resultEl.classList.add('show');
+        deleting=true; setTimeout(tick, 1600); return;
+      }
+    } else {
+      resultEl && resultEl.classList.remove('show');
+      ci--;
+      target.innerHTML = esc(phrase.slice(0,ci)) + '<span class="preview-cursor"></span>';
+      if(ci===0){ deleting=false; pi=(pi+1)%phrases.length; }
+    }
+    state._heroTimer = setTimeout(tick, deleting?35:65);
+  }
+  tick();
+}
+
+/* ---------------------------- ROLE SELECT / ONBOARDING ---------------------------- */
+function renderRoleSelect(){
+  return `
+  <div class="marketing-nav"><div class="container bar">
+    <div class="brand" data-action="go" data-view="landing" style="cursor:pointer;"><div class="mark">OS</div> OMNISERVICE CENTER</div>
+  </div></div>
+  <section class="hero"><div class="container">
+    <div class="section-head" style="max-width:640px;">
+      <div class="section-tag">Get started</div>
+      <h2>How would you like to enter?</h2>
+      <p class="desc">Seeker and provider experiences are kept fully separate after onboarding.</p>
+    </div>
+    <div class="two-col" style="grid-template-columns:1fr 1fr;">
+      <div class="info-card" style="cursor:pointer;" data-action="go" data-view="seekerOnboard">
+        <div class="sector-icon" style="margin-bottom:16px;">🔎</div>
+        <h3>I need a service</h3>
+        <p>Search, compare and request services as a Service Seeker.</p>
+        <button class="btn btn-primary" style="margin-top:16px;" data-action="go" data-view="seekerOnboard">Continue as Seeker</button>
+      </div>
+      <div class="info-card" style="cursor:pointer;" data-action="go" data-view="providerOnboard">
+        <div class="sector-icon" style="margin-bottom:16px;">🏪</div>
+        <h3>I provide services</h3>
+        <p>List your services, manage requests, and get discovered.</p>
+        <button class="btn btn-primary" style="margin-top:16px;" data-action="go" data-view="providerOnboard">Continue as Provider</button>
+      </div>
+    </div>
+    <div class="center" style="margin-top:26px;">
+      <a class="small muted" data-action="go" data-view="adminLogin">Administrator login →</a>
+    </div>
+  </div></section>
+  `;
+}
+
+function renderSeekerOnboard(){
+  return `
+  <div class="marketing-nav"><div class="container bar">
+    <div class="brand" data-action="go" data-view="landing" style="cursor:pointer;"><div class="mark">OS</div> OMNISERVICE CENTER</div>
+  </div></div>
+  <section class="hero"><div class="container" style="max-width:520px;">
+    <div class="section-head"><div class="section-tag">Service Seeker</div><h2>Create your account</h2><p class="desc">Used to track your requests and saved providers within this demo.</p></div>
+    <form class="card" data-form="seekerOnboard">
+      <div class="field"><label>Full name</label><input name="name" required placeholder="e.g. Selam Getachew"></div>
+      <div class="field"><label>Email or phone</label><input name="contact" required placeholder="e.g. selam@example.com"></div>
+      <div class="field"><label>Preferred location</label><input name="location" placeholder="e.g. Piassa, Gondar" value="Gondar"></div>
+      <button class="btn btn-primary btn-block" type="submit">Create Seeker account</button>
+      <div class="field-hint center" style="margin-top:10px;">Demo authentication — no password required.</div>
+    </form>
+  </div></section>
+  `;
+}
+
+function renderProviderOnboard(){
+  return `
+  <div class="marketing-nav"><div class="container bar">
+    <div class="brand" data-action="go" data-view="landing" style="cursor:pointer;"><div class="mark">OS</div> OMNISERVICE CENTER</div>
+  </div></div>
+  <section class="hero"><div class="container" style="max-width:620px;">
+    <div class="section-head"><div class="section-tag">Service Provider</div><h2>List your business</h2><p class="desc">New providers start as <b>Pending verification</b> until an admin reviews them.</p></div>
+    <form class="card" data-form="providerOnboard">
+      <div class="field"><label>Business / professional name</label><input name="name" required placeholder="e.g. Blue Nile Repairs"></div>
+      <div class="field-row">
+        <div class="field"><label>Sector</label>
+          <select name="sectorId" required>${SECTORS.map(s=>`<option value="${s.id}">${s.name}</option>`).join('')}</select>
+        </div>
+        <div class="field"><label>Primary service</label><select name="serviceId" id="providerServiceSelect"></select></div>
+      </div>
+      <div class="field"><label>Description</label><textarea name="desc" rows="3" placeholder="What do you offer?" required></textarea></div>
+      <div class="field-row">
+        <div class="field"><label>Address</label><input name="address" placeholder="e.g. Piassa, Gondar" required></div>
+        <div class="field"><label>Phone</label><input name="phone" placeholder="+251 9…" required></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Opening hours</label><input name="hours" placeholder="e.g. Mon–Sat 9:00–18:00"></div>
+        <div class="field"><label>Price info (optional)</label><input name="priceInfo" placeholder="e.g. From 300 ETB"></div>
+      </div>
+      <button class="btn btn-primary btn-block" type="submit">Submit for verification</button>
+      <div class="field-hint center" style="margin-top:10px;">Location is set to central Gondar by default for this demo.</div>
+    </form>
+  </div></section>
+  `;
+}
+
+function renderAdminLogin(){
+  return `
+  <div class="marketing-nav"><div class="container bar">
+    <div class="brand" data-action="go" data-view="landing" style="cursor:pointer;"><div class="mark">OS</div> OMNISERVICE CENTER</div>
+  </div></div>
+  <section class="hero"><div class="container" style="max-width:420px;">
+    <div class="section-head"><div class="section-tag">Administrator</div><h2>Admin Portal</h2><p class="desc">Not a public signup path — for platform operators.</p></div>
+    <form class="card" data-form="adminLogin">
+      <div class="field"><label>Admin passcode</label><input name="passcode" placeholder="Enter DEMO to continue" required></div>
+      <button class="btn btn-primary btn-block" type="submit">Enter Admin Portal</button>
+      <div class="field-hint center" style="margin-top:10px;">Demo passcode: <b>DEMO</b></div>
+    </form>
+  </div></section>
+  `;
+}
+
+/* ---------------------------- MODAL (request form, provider detail, review, about) ---------------------------- */
+function renderModal(){
+  const m = state.sub.modal;
+  if(!m) return '';
+  let body = '';
+  if(m.type==='about') body = aboutModalBody();
+  else if(m.type==='providerDetail') body = providerDetailModalBody(m.providerId);
+  else if(m.type==='requestForm') body = requestFormModalBody(m.providerId, m.serviceId);
+  else if(m.type==='reviewForm') body = reviewFormModalBody(m.requestId);
+  else if(m.type==='dealForm') body = dealFormModalBody();
+  return `<div class="modal-backdrop" data-action="closeModal"><div class="modal modal-wrap" onclick="event.stopPropagation()">
+    <span class="btn-ghost modal-close" data-action="closeModal">✕</span>
+    ${body}
+  </div></div>`;
+}
+
+function aboutModalBody(){
+  return `
+  <h3>About this prototype</h3>
+  <p class="muted" style="font-size:13.5px;line-height:1.6;">
+  OMNISERVICE CENTER runs entirely as a client-side application. There is no hosted PostgreSQL server here — the "database" is a shared JSON record kept in persistent browser-accessible storage, so a request made as a Seeker really does appear in the Provider and Admin views live. This mirrors the intended production data model without requiring server infrastructure for the demo.</p>
+  <p class="muted" style="font-size:13.5px;line-height:1.6;margin-top:10px;">
+  <b>OMNI AI</b> first tries deterministic keyword/synonym matching against the real service catalog. When a request is ambiguous, it calls a Claude language model, constrained to return only a service ID that exists in the catalog — it cannot invent a provider or a result.</p>
+  <p class="muted" style="font-size:13.5px;line-height:1.6;margin-top:10px;">
+  <b>The map</b> is a real Leaflet + OpenStreetMap integration, not an image. Every marker links back to one canonical provider record shared with the AI results and provider profile.</p>
+  <p class="muted" style="font-size:13.5px;line-height:1.6;margin-top:10px;">
+  <b>Honest limitations:</b> all 23 providers are fictional demo records clearly labeled as prototype data — no real business's identity, rating or affiliation is used. Payments, SMS notifications and multilingual support are represented structurally but are not live-connected to external providers. Verification is simulated by the in-app Admin Portal rather than checked against outside documents.</p>
+  `;
+}
+
+function providerDetailModalBody(providerId){
+  const p = DB.providers.find(x=>x.id===providerId);
+  if(!p) return '<p>Provider not found.</p>';
+  const services = p.serviceIds.map(id=>svc(id)).filter(Boolean);
+  const avg = providerAvgRating(p.id);
+  const stars = starString(avg);
+  const reviews = DB.reviews.filter(r=>r.providerId===p.id && r.moderation==='approved');
+  const vClass = p.verification==='Verified'?'badge-verified':p.verification==='Pending'?'badge-pending':'badge-rejected';
+  return `
+  <div class="row spread" style="align-items:flex-start;">
+    <div>
+      <h3>${esc(p.name)}</h3>
+      <div class="row gap-s" style="margin:6px 0 10px;flex-wrap:wrap;">
+        <span class="badge ${vClass}">${p.verification}</span>
+        <span class="badge badge-sector">${sectorOf(p.sectorId).icon} ${sectorOf(p.sectorId).name}</span>
+        <span class="badge badge-demo">Demo Provider · Prototype Data</span>
+      </div>
+    </div>
+  </div>
+  <p class="muted" style="font-size:14px;line-height:1.55;">${esc(p.desc)}</p>
+  <div class="card" style="background:#F8FAFD;">
+    <div class="row spread small muted" style="margin-bottom:6px;"><span>📍 ${esc(p.address)}</span></div>
+    <div class="row spread small muted" style="margin-bottom:6px;"><span>🕒 ${esc(p.hours||'Not specified')}</span></div>
+    <div class="row spread small muted" style="margin-bottom:6px;"><span>📞 ${esc(p.phone||'Not specified')}</span></div>
+    <div class="row spread small muted"><span>💳 ${esc(p.priceInfo||'Price on request')}</span></div>
+  </div>
+  <div style="margin:14px 0;">
+    <b class="small">Services offered</b>
+    <div class="row gap-s" style="flex-wrap:wrap;margin-top:8px;">
+      ${services.map(s=>`<span class="badge badge-sector">${esc(s.name)}</span>`).join('')}
+    </div>
+  </div>
+  <div style="margin:14px 0;">
+    <b class="small">Rating</b>
+    <div style="margin-top:6px;">${avg!=null ? `<span class="rating-stars">${stars}</span> <span class="small muted">${avg.toFixed(1)} · ${reviews.length} review${reviews.length===1?'':'s'}</span>` : `<span class="small muted">No reviews yet</span>`}</div>
+    ${reviews.slice(0,3).map(r=>`<div class="small muted" style="margin-top:8px;border-top:1px solid var(--border);padding-top:8px;">“${esc(r.comment)}” — <span class="rating-stars">${starString(r.rating)}</span></div>`).join('')}
+  </div>
+  <div class="row gap-s" style="margin-top:18px;">
+    <button class="btn btn-primary btn-block" data-action="openRequestForm" data-provider="${p.id}">Request this service</button>
+    <button class="btn btn-secondary" data-action="focusOnMap" data-provider="${p.id}">View on map</button>
+  </div>
+  `;
+}
+
+function requestFormModalBody(providerId, presetServiceId){
+  const p = DB.providers.find(x=>x.id===providerId);
+  if(!p) return '<p>Provider not found.</p>';
+  const services = p.serviceIds.map(id=>svc(id)).filter(Boolean);
+  const seeker = currentSeeker();
+  return `
+  <h3>Request a service</h3>
+  <p class="muted small" style="margin-bottom:16px;">From <b>${esc(p.name)}</b>${seeker?` · as ${esc(seeker.name)}`:''}</p>
+  <form data-form="createRequest" data-provider="${p.id}">
+    <div class="field"><label>Service</label>
+      <select name="serviceId">${services.map(s=>`<option value="${s.id}" ${s.id===presetServiceId?'selected':''}>${s.name}</option>`).join('')}</select>
+    </div>
+    <div class="field"><label>Describe what you need</label><textarea name="description" rows="3" required placeholder="e.g. My laptop won't turn on since yesterday…"></textarea></div>
+    <div class="field-row">
+      <div class="field"><label>Urgency</label>
+        <select name="urgency"><option>Standard</option><option>Urgent</option><option>Flexible</option></select>
+      </div>
+      <div class="field"><label>Preferred time</label><input name="preferredTime" placeholder="e.g. Today afternoon"></div>
+    </div>
+    <div class="field"><label>Your location</label><input name="location" value="${seeker?esc(seeker.location||'Gondar'):'Gondar'}"></div>
+    <button class="btn btn-primary btn-block" type="submit">Send request</button>
+  </form>
+  `;
+}
+
+function reviewFormModalBody(requestId){
+  const r = DB.requests.find(x=>x.id===requestId);
+  const p = r ? DB.providers.find(x=>x.id===r.providerId) : null;
+  return `
+  <h3>Leave a review</h3>
+  <p class="muted small" style="margin-bottom:16px;">For ${p?esc(p.name):'this provider'}, based on your completed request.</p>
+  <form data-form="createReview" data-request="${requestId}">
+    <div class="field"><label>Rating</label>
+      <select name="rating"><option value="5">★★★★★ Excellent</option><option value="4">★★★★☆ Good</option><option value="3">★★★☆☆ Okay</option><option value="2">★★☆☆☆ Poor</option><option value="1">★☆☆☆☆ Very poor</option></select>
+    </div>
+    <div class="field"><label>Comment</label><textarea name="comment" rows="3" required placeholder="How did it go?"></textarea></div>
+    <button class="btn btn-primary btn-block" type="submit">Submit review</button>
+    <div class="field-hint center" style="margin-top:8px;">Reviews are moderated by the Admin Portal before appearing publicly.</div>
+  </form>
+  `;
+}
+
+function dealFormModalBody(){
+  const p = currentProvider();
+  const services = p ? p.serviceIds.map(id=>svc(id)).filter(Boolean) : [];
+  return `
+  <h3>Create a deal</h3>
+  <form data-form="createDeal">
+    <div class="field"><label>Title</label><input name="title" required placeholder="e.g. 15% off laptop screen repairs"></div>
+    <div class="field"><label>Service</label><select name="serviceId">${services.map(s=>`<option value="${s.id}">${s.name}</option>`).join('')}</select></div>
+    <div class="field"><label>Description</label><textarea name="description" rows="2" required placeholder="What does the deal include?"></textarea></div>
+    <div class="field-row">
+      <div class="field"><label>Start date</label><input type="date" name="startAt" required></div>
+      <div class="field"><label>End date</label><input type="date" name="endAt" required></div>
+    </div>
+    <div class="field"><label>Terms</label><input name="terms" placeholder="e.g. Valid in-store only"></div>
+    <button class="btn btn-primary btn-block" type="submit">Submit for approval</button>
+    <div class="field-hint center" style="margin-top:8px;">Deals go live after Admin approval.</div>
+  </form>
+  `;
+}
+
+/* ---------------------------- DEMO SWITCHER ---------------------------- */
+function renderDemoSwitcher(){
+  if(state.view==='landing' || !state.showDemoSwitcher) return '';
+  return `
+  <div class="demo-switcher">
+    <span class="close-x" data-action="hideDemoSwitcher">✕</span>
+    <b>Competition demo controls</b>
+    <div class="row row-wrap" style="gap:6px;">
+      <button class="${SESSION.role==='seeker'?'on':''}" data-action="quickRole" data-role="seeker">Seeker view</button>
+      <button class="${SESSION.role==='provider'?'on':''}" data-action="quickRole" data-role="provider">Provider view</button>
+      <button class="${SESSION.isAdmin?'on':''}" data-action="quickRole" data-role="admin">Admin view</button>
+      <button data-action="openAbout">About</button>
+    </div>
+  </div>`;
+}
+
+/* ---------------------------- SEEKER APP ---------------------------- */
+function seekerSidebarLinks(){
+  return [
+    {id:'home', icon:'🏠', label:'Home'},
+    {id:'about', icon:'ℹ️', label:'About'},
+    {id:'services', icon:'🗂️', label:'Services'},
+    {id:'map', icon:'🗺️', label:'Map'},
+    {id:'ai', icon:'✨', label:'OMNI AI'},
+    {id:'deals', icon:'🏷️', label:'Deals'},
+    {id:'requests', icon:'📋', label:'My Requests'},
+    {id:'contact', icon:'✉️', label:'Contact'},
+  ];
+}
+
+function renderSeekerApp(){
+  const seeker = currentSeeker();
+  const nav = state.seekerNav;
+  return `
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand" data-action="seekerNav" data-nav="home"><div class="mark" style="width:28px;height:28px;font-size:12px;">OS</div> OMNISERVICE</div>
+      <div class="sidebar-nav">
+        ${seekerSidebarLinks().map(l=>`
+          <a class="sidebar-link ${nav===l.id?'active':''}" data-action="seekerNav" data-nav="${l.id}">
+            <span class="sidebar-icon">${l.icon}</span> ${l.label}
+          </a>`).join('')}
+      </div>
+      <div class="sidebar-foot">
+        <span class="role-pill">Seeker · ${seeker?esc(seeker.name):'Guest'}</span>
+        <button class="btn btn-ghost btn-sm" style="padding-left:0;" data-action="logout">Sign out</button>
+      </div>
+    </aside>
+    <main class="main">
+      ${renderSeekerNav(nav, seeker)}
+    </main>
+  </div>`;
+}
+
+function renderSeekerNav(nav, seeker){
+  if(nav==='home') return seekerHome(seeker);
+  if(nav==='about') return seekerAbout();
+  if(nav==='services') return seekerServices();
+  if(nav==='map') return seekerMap();
+  if(nav==='ai') return seekerAI();
+  if(nav==='deals') return seekerDeals();
+  if(nav==='requests') return seekerRequests(seeker);
+  if(nav==='contact') return seekerContact();
+  return '';
+}
+
+function seekerHome(seeker){
+  const recentRequests = DB.requests.filter(r=>r.seekerId===seeker?.id).slice(-3).reverse();
+  const featured = DB.providers.filter(p=>p.verification==='Verified').slice(0,4);
+  return `
+  <div class="main-head"><div><h1>Welcome back${seeker?', '+esc(seeker.name.split(' ')[0]):''}</h1><p>What do you need help with today?</p></div></div>
+  <div class="card" style="margin-bottom:20px;">
+    <div class="row gap-m" style="align-items:center;">
+      <span style="font-size:22px;">✨</span>
+      <input id="homeAIInput" placeholder="Describe what you need — e.g. 'my laptop won't turn on'" style="flex:1;border:1px solid var(--border);border-radius:10px;padding:12px 14px;font-size:14px;">
+      <button class="btn btn-primary" data-action="homeAISubmit">Ask OMNI AI</button>
+    </div>
+  </div>
+  <b class="small muted">Quick sectors</b>
+  <div class="sector-grid" style="margin:12px 0 26px;">
+    ${SECTORS.slice(0,8).map(s=>`
+      <div class="sector-card" data-action="openSector" data-sector="${s.id}">
+        <div class="sector-icon">${s.icon}</div><h4>${s.name}</h4><p>${s.desc}</p>
+      </div>`).join('')}
+  </div>
+  <div class="two-col">
+    <div>
+      <b class="small muted">Your recent requests</b>
+      <div style="margin-top:10px;">
+        ${recentRequests.length ? recentRequests.map(r=>reqSummaryRow(r)).join('') : `<div class="card empty-state" style="padding:26px;"><div class="ico">📋</div>No requests yet — try OMNI AI above.</div>`}
+      </div>
+    </div>
+    <div>
+      <b class="small muted">Featured verified providers</b>
+      <div style="margin-top:10px;display:flex;flex-direction:column;gap:10px;">
+        ${featured.map(p=>miniProviderRow(p)).join('')}
+      </div>
+    </div>
+  </div>
+  `;
+}
+
+function reqSummaryRow(r){
+  const p = DB.providers.find(x=>x.id===r.providerId);
+  const s = svc(r.serviceId);
+  return `<div class="card" style="padding:14px;margin-bottom:10px;cursor:pointer;" data-action="seekerNav" data-nav="requests">
+    <div class="row spread"><b class="small">${esc(s?s.name:'Service')}</b><span class="status-pill status-${r.status.replace(' ','-')}">${r.status}</span></div>
+    <div class="small muted" style="margin-top:4px;">${esc(p?p.name:'')} · ${fmtDate(r.createdAt)}</div>
+  </div>`;
+}
+function miniProviderRow(p){
+  const avg = providerAvgRating(p.id);
+  return `<div class="card" style="padding:12px 14px;cursor:pointer;" data-action="openProvider" data-provider="${p.id}">
+    <div class="row spread"><b class="small">${esc(p.name)}</b><span class="badge badge-verified">Verified</span></div>
+    <div class="small muted" style="margin-top:4px;">${sectorOf(p.sectorId).name}${avg!=null?` · ★ ${avg.toFixed(1)}`:''}</div>
+  </div>`;
+}
+
+function seekerAbout(){
+  return `
+  <div class="main-head"><div><h1>About OMNISERVICE CENTER</h1><p>One smart place for every service.</p></div></div>
+  <div class="card">
+    <p class="muted" style="line-height:1.6;font-size:14.5px;">OMNISERVICE CENTER connects service seekers with verified local providers across 12 sectors, using OMNI AI to translate plain-language requests into structured service matches, backed by a real map and a transparent request-tracking system.</p>
+    <button class="btn btn-secondary" style="margin-top:14px;" data-action="openAbout">How this prototype is built →</button>
+  </div>`;
+}
+
+function seekerServices(){
+  const sub = state.sub;
+  if(sub.selectedService){
+    const s = svc(sub.selectedService);
+    const seekerLoc = state._geoResult || GONDAR_CENTER;
+    const providers = rankProviders(DB.providers.filter(p=>p.serviceIds.includes(s.id)), seekerLoc);
+    return `
+    <div class="main-head"><div>
+      <a class="small muted" data-action="openSector" data-sector="${s.sectorId}">← ${sectorOf(s.sectorId).name}</a>
+      <h1 style="margin-top:6px;">${esc(s.name)}</h1><p>${providers.length} provider${providers.length===1?'':'s'} found</p>
+    </div></div>
+    <div class="grid-cards">${providers.length? providers.map(p=>providerCard(p)).join('') : `<div class="empty-state"><div class="ico">🔍</div>No providers listed for this service yet.</div>`}</div>
+    `;
+  }
+  if(sub.selectedSector){
+    const sec = sectorOf(sub.selectedSector);
+    const services = SERVICES.filter(s=>s.sectorId===sec.id);
+    return `
+    <div class="main-head"><div>
+      <a class="small muted" data-action="seekerNav" data-nav="services">← All sectors</a>
+      <h1 style="margin-top:6px;">${sec.icon} ${sec.name}</h1><p>${sec.desc}</p>
+    </div></div>
+    <div class="sector-grid">
+      ${services.map(s=>`<div class="sector-card" data-action="openService" data-service="${s.id}"><div class="sector-icon">🔧</div><h4>${s.name}</h4><p>${DB.providers.filter(p=>p.serviceIds.includes(s.id)).length} provider(s)</p></div>`).join('')}
+    </div>`;
+  }
+  return `
+  <div class="main-head"><div><h1>Services</h1><p>Choose a sector to explore.</p></div></div>
+  <div class="sector-grid">
+    ${SECTORS.map(s=>`<div class="sector-card" data-action="openSector" data-sector="${s.id}"><div class="sector-icon">${s.icon}</div><h4>${s.name}</h4><p>${s.desc}</p></div>`).join('')}
+  </div>`;
+}
+
+function providerCard(p){
+  const vClass = p.verification==='Verified'?'badge-verified':p.verification==='Pending'?'badge-pending':'badge-rejected';
+  const avg = p._avg!==undefined ? p._avg : providerAvgRating(p.id);
+  return `
+  <div class="provider-card ${state.sub.highlightProvider===p.id?'highlighted':''}">
+    <div class="provider-top">
+      <div><div class="provider-name">${esc(p.name)}</div><div class="provider-meta">
+        <span class="badge ${vClass}">${p.verification}</span>
+        ${p._dist!=null?`<span>📍 ${fmtKm(p._dist)}</span>`:''}
+        ${avg!=null?`<span class="rating-stars">${starString(avg)}</span>`:'<span>No reviews yet</span>'}
+      </div></div>
+    </div>
+    <div class="provider-desc">${esc(p.desc)}</div>
+    <div class="small muted">🕒 ${esc(p.hours||'—')} · 💳 ${esc(p.priceInfo||'Price on request')}</div>
+    <div class="provider-actions">
+      <button class="btn btn-secondary btn-sm" data-action="openProvider" data-provider="${p.id}">View details</button>
+      <button class="btn btn-primary btn-sm" data-action="openRequestForm" data-provider="${p.id}">Request</button>
+    </div>
+  </div>`;
+}
+
+function seekerMap(){
+  return `
+  <div class="main-head"><div><h1>Map</h1><p>Real provider locations across Gondar.</p></div></div>
+  <div class="map-shell">
+    <div class="map-filters">
+      <b class="small">Filter by sector</b>
+      <div class="filter-chip-list">
+        <span class="filter-chip ${!state.sub.mapSectorFilter?'active':''}" data-action="mapFilterSector" data-sector="">All</span>
+        ${SECTORS.map(s=>`<span class="filter-chip ${state.sub.mapSectorFilter===s.id?'active':''}" data-action="mapFilterSector" data-sector="${s.id}">${s.icon} ${s.name}</span>`).join('')}
+      </div>
+      <div class="info-banner" style="margin-top:16px;">Click any marker to open that provider's profile.</div>
+    </div>
+    <div class="leaflet-map-el" id="leaflet-map"></div>
+  </div>`;
+}
+
+function seekerAI(){
+  const chat = state.sub.chat || (state.sub.chat = [{who:'ai', text:"Hi — I'm OMNI AI. Tell me what you need help with, in your own words.", tag:null}]);
+  return `
+  <div class="main-head"><div><h1>OMNI AI</h1><p>Describe your problem in plain language.</p></div></div>
+  <div class="ai-shell">
+    <div class="chat-window">
+      <div class="chat-log" id="chatLog">${chat.map(renderChatMsg).join('')}${state.sub.aiThinking?'<div class="typing"><span></span><span></span><span></span></div>':''}</div>
+      <div class="chat-suggestions">
+        ${["My laptop won't turn on","I need a tutor for my daughter","Find a verified dentist near me","My car broke down"].map(t=>`<span class="suggestion-chip" data-action="chatSuggest" data-text="${esc(t)}">${esc(t)}</span>`).join('')}
+      </div>
+      <form class="chat-input-row" data-form="chatSend">
+        <input name="text" placeholder="Type your message…" autocomplete="off" ${state.sub.aiThinking?'disabled':''}>
+        <button class="btn btn-primary" type="submit" ${state.sub.aiThinking?'disabled':''}>Send</button>
+      </form>
+    </div>
+    <div class="ai-side-panel">
+      <b class="small muted">Matched providers</b>
+      <div style="margin-top:10px;display:flex;flex-direction:column;gap:10px;">
+        ${(state.sub.aiProviders||[]).length ? state.sub.aiProviders.map(p=>`
+          <div class="card" style="padding:12px 14px;cursor:pointer;" data-action="openProvider" data-provider="${p.id}">
+            <div class="row spread"><b class="small">${esc(p.name)}</b><span class="badge ${p.verification==='Verified'?'badge-verified':'badge-pending'}">${p.verification}</span></div>
+            <div class="small muted" style="margin-top:4px;">${p._dist!=null?fmtKm(p._dist)+' away':''}</div>
+          </div>`).join('') : `<div class="small muted">Results will appear here once OMNI AI identifies a service.</div>`}
+      </div>
+    </div>
+  </div>`;
+}
+function renderChatMsg(m){
+  if(m.who==='user') return `<div class="msg user">${esc(m.text)}</div>`;
+  return `<div class="msg ai">${m.tag?`<span class="tag">${esc(m.tag)}</span>`:''}${esc(m.text)}</div>`;
+}
+
+function seekerDeals(){
+  const active = DB.deals.filter(d=>d.status==='Approved');
+  return `
+  <div class="main-head"><div><h1>Deals</h1><p>Provider promotions approved by the Admin Portal.</p></div></div>
+  <div class="grid-cards">
+    ${active.length? active.map(d=>{
+      const p = DB.providers.find(x=>x.id===d.providerId);
+      return `<div class="card"><b>${esc(d.title)}</b><div class="small muted" style="margin:6px 0;">${esc(p?p.name:'')}</div><div class="small">${esc(d.description)}</div><div class="small muted" style="margin-top:8px;">Valid ${d.startAt} → ${d.endAt}</div></div>`;
+    }).join('') : `<div class="empty-state"><div class="ico">🏷️</div>No approved deals yet — check back soon.</div>`}
+  </div>`;
+}
+
+function seekerRequests(seeker){
+  const reqs = DB.requests.filter(r=>r.seekerId===seeker?.id).slice().reverse();
+  return `
+  <div class="main-head"><div><h1>My Requests</h1><p>Track every request from submission to completion.</p></div></div>
+  ${reqs.length? reqs.map(r=>requestDetailCard(r, 'seeker')).join('') : `<div class="empty-state"><div class="ico">📋</div>No requests yet. Try OMNI AI or browse Services.</div>`}
+  `;
+}
+
+function requestDetailCard(r, viewer){
+  const p = DB.providers.find(x=>x.id===r.providerId);
+  const s = svc(r.serviceId);
+  const alreadyReviewed = DB.reviews.some(rv=>rv.requestId===r.id);
+  return `
+  <div class="req-item">
+    <div class="req-top">
+      <div><b>${esc(s?s.name:'Service')}</b><div class="small muted">${esc(p?p.name:'')}${r.urgency?' · '+r.urgency:''}</div></div>
+      <span class="status-pill status-${r.status.replace(' ','-')}">${r.status}</span>
+    </div>
+    <div class="small" style="margin-top:8px;">${esc(r.description)}</div>
+    ${viewer==='provider' ? `
+    <div class="row gap-s" style="margin-top:12px;flex-wrap:wrap;">
+      ${r.status==='New'?`<button class="btn btn-secondary btn-sm" data-action="setReqStatus" data-req="${r.id}" data-status="Viewed">Mark viewed</button>`:''}
+      ${['New','Viewed'].includes(r.status)?`<button class="btn btn-success btn-sm" data-action="setReqStatus" data-req="${r.id}" data-status="Accepted">Accept</button><button class="btn btn-danger btn-sm" data-action="setReqStatus" data-req="${r.id}" data-status="Rejected">Decline</button>`:''}
+      ${r.status==='Accepted'?`<button class="btn btn-secondary btn-sm" data-action="setReqStatus" data-req="${r.id}" data-status="In Progress">Start work</button>`:''}
+      ${r.status==='In Progress'?`<button class="btn btn-success btn-sm" data-action="setReqStatus" data-req="${r.id}" data-status="Completed">Mark completed</button>`:''}
+      ${!['Completed','Rejected','Cancelled'].includes(r.status)?`<button class="btn btn-ghost btn-sm" data-action="setReqStatus" data-req="${r.id}" data-status="Cancelled">Cancel</button>`:''}
+    </div>` : ''}
+    ${viewer==='seeker' && r.status==='Completed' && !alreadyReviewed ? `<button class="btn btn-secondary btn-sm" style="margin-top:10px;" data-action="openReviewForm" data-req="${r.id}">Leave a review</button>` : ''}
+    <div class="timeline">
+      ${r.events.map(e=>`<div class="timeline-item"><span class="dot"></span><span>${esc(e.status)} · ${fmtDate(e.ts)}${e.note?' — '+esc(e.note):''}</span></div>`).join('')}
+    </div>
+  </div>`;
+}
+
+function seekerContact(){
+  return `
+  <div class="main-head"><div><h1>Contact</h1><p>Questions about OMNISERVICE CENTER.</p></div></div>
+  <div class="card"><p class="muted">This is a science-fair prototype — for the purposes of this demo, use the Admin Portal to review platform activity rather than contacting a live support team.</p></div>`;
+}
+
+/* ---------------------------- PROVIDER APP ---------------------------- */
+function providerSidebarLinks(){
+  return [
+    {id:'dashboard', icon:'🏠', label:'Home'},
+    {id:'about', icon:'ℹ️', label:'About'},
+    {id:'requests', icon:'📋', label:'Requests'},
+    {id:'services', icon:'🗂️', label:'Services'},
+    {id:'deals', icon:'🏷️', label:'Service Deals'},
+    {id:'promotion', icon:'📣', label:'Promotion'},
+    {id:'profile', icon:'👤', label:'Profile'},
+    {id:'contact', icon:'✉️', label:'Contact'},
+  ];
+}
+function renderProviderApp(){
+  const p = currentProvider();
+  const nav = state.providerNav;
+  return `
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand" data-action="providerNav" data-nav="dashboard"><div class="mark" style="width:28px;height:28px;font-size:12px;">OS</div> OMNISERVICE</div>
+      <div class="sidebar-nav">
+        ${providerSidebarLinks().map(l=>`<a class="sidebar-link ${nav===l.id?'active':''}" data-action="providerNav" data-nav="${l.id}"><span class="sidebar-icon">${l.icon}</span> ${l.label}</a>`).join('')}
+      </div>
+      <div class="sidebar-foot">
+        <span class="role-pill">Provider · ${p?esc(p.name):'—'}</span>
+        <button class="btn btn-ghost btn-sm" style="padding-left:0;" data-action="logout">Sign out</button>
+      </div>
+    </aside>
+    <main class="main">${renderProviderNav(nav, p)}</main>
+  </div>`;
+}
+function renderProviderNav(nav, p){
+  if(!p) return `<div class="empty-state"><div class="ico">🏪</div>No provider profile in session.<br><button class="btn btn-primary" style="margin-top:14px;" data-action="go" data-view="providerOnboard">Create a provider profile</button></div>`;
+  if(nav==='dashboard') return providerDashboard(p);
+  if(nav==='about') return providerAbout();
+  if(nav==='requests') return providerRequests(p);
+  if(nav==='services') return providerServices(p);
+  if(nav==='deals') return providerDeals(p);
+  if(nav==='promotion') return providerPromotion(p);
+  if(nav==='profile') return providerProfile(p);
+  if(nav==='contact') return seekerContact();
+  return '';
+}
+function providerDashboard(p){
+  const reqs = DB.requests.filter(r=>r.providerId===p.id);
+  const counts = {New:0, Viewed:0, Accepted:0, 'In Progress':0, Completed:0, Rejected:0, Cancelled:0};
+  reqs.forEach(r=>counts[r.status]=(counts[r.status]||0)+1);
+  const vClass = p.verification==='Verified'?'badge-verified':p.verification==='Pending'?'badge-pending':'badge-rejected';
+  return `
+  <div class="main-head"><div><h1>${esc(p.name)}</h1><p>Provider dashboard</p></div><span class="badge ${vClass}">${p.verification}</span></div>
+  <div class="grid-cards" style="margin-bottom:24px;">
+    <div class="stat-card"><div class="val">${counts.New}</div><div class="lbl">New requests</div></div>
+    <div class="stat-card"><div class="val">${counts.Accepted+counts['In Progress']}</div><div class="lbl">In progress</div></div>
+    <div class="stat-card"><div class="val">${counts.Completed}</div><div class="lbl">Completed</div></div>
+    <div class="stat-card"><div class="val">${DB.deals.filter(d=>d.providerId===p.id).length}</div><div class="lbl">Deals submitted</div></div>
+  </div>
+  <b class="small muted">Latest requests</b>
+  <div style="margin-top:10px;">
+    ${reqs.slice(-3).reverse().map(r=>requestDetailCard(r,'provider')).join('') || `<div class="empty-state"><div class="ico">📭</div>No requests yet.</div>`}
+  </div>`;
+}
+function providerAbout(){
+  return `<div class="main-head"><div><h1>About</h1><p>How the Provider Portal fits into OMNISERVICE CENTER.</p></div></div>
+  <div class="card"><p class="muted" style="line-height:1.6;font-size:14.5px;">Once verified, your profile becomes discoverable through the 12-sector directory, the OMNI AI matching engine, and the live map — all referencing this same provider record.</p></div>`;
+}
+function providerRequests(p){
+  const reqs = DB.requests.filter(r=>r.providerId===p.id).slice().reverse();
+  return `<div class="main-head"><div><h1>Requests</h1><p>Manage incoming service requests.</p></div></div>
+  ${reqs.length? reqs.map(r=>requestDetailCard(r,'provider')).join('') : `<div class="empty-state"><div class="ico">📭</div>No requests yet.</div>`}`;
+}
+function providerServices(p){
+  const services = p.serviceIds.map(id=>svc(id)).filter(Boolean);
+  return `<div class="main-head"><div><h1>Services</h1><p>Services listed under your profile.</p></div></div>
+  <div class="grid-cards">${services.map(s=>`<div class="card"><b>${esc(s.name)}</b><div class="small muted" style="margin-top:6px;">${sectorOf(s.sectorId).name}</div></div>`).join('')}</div>
+  <div class="info-banner" style="margin-top:16px;">Editing the service list is not enabled in this demo build — services are set at onboarding.</div>`;
+}
+function providerDeals(p){
+  const mine = DB.deals.filter(d=>d.providerId===p.id).slice().reverse();
+  return `<div class="main-head"><div><h1>Service Deals</h1><p>Create and track promotional offers.</p></div><button class="btn btn-primary" data-action="openDealForm">New deal</button></div>
+  ${mine.length? mine.map(d=>`<div class="card"><div class="row spread"><b>${esc(d.title)}</b><span class="badge ${d.status==='Approved'?'badge-verified':d.status==='Rejected'?'badge-rejected':'badge-pending'}">${d.status}</span></div><div class="small muted" style="margin-top:6px;">${esc(d.description)}</div><div class="small muted" style="margin-top:6px;">${d.startAt} → ${d.endAt}</div></div>`).join('') : `<div class="empty-state"><div class="ico">🏷️</div>No deals yet.</div>`}`;
+}
+function providerPromotion(p){
+  return `<div class="main-head"><div><h1>Promotion</h1><p>Request featured placement (admin-approved).</p></div></div>
+  <div class="card"><p class="muted">Promotion campaigns share the same approval workflow as deals in this prototype. Use <b>Service Deals</b> to submit a promotional offer — the Admin Portal reviews and approves it before it becomes visible to seekers.</p></div>`;
+}
+function providerProfile(p){
+  const vClass = p.verification==='Verified'?'badge-verified':p.verification==='Pending'?'badge-pending':'badge-rejected';
+  return `<div class="main-head"><div><h1>Profile</h1><p>How seekers see your business.</p></div></div>
+  <div class="card">
+    <div class="row spread"><b style="font-size:17px;">${esc(p.name)}</b><span class="badge ${vClass}">${p.verification}</span></div>
+    <p class="muted" style="margin-top:10px;">${esc(p.desc)}</p>
+    <div class="small muted" style="margin-top:10px;">📍 ${esc(p.address)} · 📞 ${esc(p.phone)} · 🕒 ${esc(p.hours||'—')}</div>
+  </div>`;
+}
+
+/* ---------------------------- ADMIN APP ---------------------------- */
+function adminSidebarLinks(){
+  return [
+    {id:'dashboard', icon:'📊', label:'Dashboard'},
+    {id:'providers', icon:'🏪', label:'Providers'},
+    {id:'verification', icon:'✅', label:'Verification Queue'},
+    {id:'requests', icon:'📋', label:'Service Requests'},
+    {id:'deals', icon:'🏷️', label:'Deals & Promotions'},
+    {id:'reviews', icon:'⭐', label:'Reviews'},
+    {id:'audit', icon:'🧾', label:'Audit Log'},
+  ];
+}
+function renderAdminApp(){
+  const nav = state.adminNav;
+  return `
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand" data-action="adminNav" data-nav="dashboard"><div class="mark" style="width:28px;height:28px;font-size:12px;">OS</div> OMNISERVICE</div>
+      <div class="sidebar-nav">
+        ${adminSidebarLinks().map(l=>`<a class="sidebar-link ${nav===l.id?'active':''}" data-action="adminNav" data-nav="${l.id}"><span class="sidebar-icon">${l.icon}</span> ${l.label}</a>`).join('')}
+      </div>
+      <div class="sidebar-foot">
+        <span class="role-pill">Administrator</span>
+        <button class="btn btn-ghost btn-sm" style="padding-left:0;" data-action="logout">Sign out</button>
+      </div>
+    </aside>
+    <main class="main">${renderAdminNav(nav)}</main>
+  </div>`;
+}
+function renderAdminNav(nav){
+  if(nav==='dashboard') return adminDashboard();
+  if(nav==='providers') return adminProviders();
+  if(nav==='verification') return adminVerification();
+  if(nav==='requests') return adminRequests();
+  if(nav==='deals') return adminDeals();
+  if(nav==='reviews') return adminReviews();
+  if(nav==='audit') return adminAudit();
+  return '';
+}
+function adminDashboard(){
+  const totalProviders = DB.providers.length;
+  const pending = DB.providers.filter(p=>p.verification==='Pending').length;
+  const openReq = DB.requests.filter(r=>!['Completed','Rejected','Cancelled'].includes(r.status)).length;
+  const completed = DB.requests.filter(r=>r.status==='Completed').length;
+  return `
+  <div class="main-head"><div><h1>Admin Dashboard</h1><p>Metrics computed live from platform records.</p></div></div>
+  <div class="grid-cards">
+    <div class="stat-card"><div class="val">${DB.seekers.length}</div><div class="lbl">Registered seekers</div></div>
+    <div class="stat-card"><div class="val">${totalProviders}</div><div class="lbl">Providers listed</div></div>
+    <div class="stat-card"><div class="val">${pending}</div><div class="lbl">Pending verification</div></div>
+    <div class="stat-card"><div class="val">${openReq}</div><div class="lbl">Open requests</div></div>
+    <div class="stat-card"><div class="val">${completed}</div><div class="lbl">Completed requests</div></div>
+    <div class="stat-card"><div class="val">${DB.deals.filter(d=>d.status==='Approved').length}</div><div class="lbl">Active deals</div></div>
+  </div>
+  <div class="info-banner" style="margin-top:20px;">All figures reflect this shared demo dataset only — no figures are fabricated.</div>`;
+}
+function adminProviders(){
+  return `<div class="main-head"><div><h1>Providers</h1><p>All provider records.</p></div></div>
+  <div class="card"><table class="admin-table"><thead><tr><th>Name</th><th>Sector</th><th>Status</th><th>Address</th><th></th></tr></thead>
+  <tbody>${DB.providers.map(p=>`<tr>
+    <td><b>${esc(p.name)}</b></td><td>${sectorOf(p.sectorId).name}</td>
+    <td><span class="badge ${p.verification==='Verified'?'badge-verified':p.verification==='Pending'?'badge-pending':'badge-rejected'}">${p.verification}</span></td>
+    <td class="small muted">${esc(p.address)}</td>
+    <td><button class="btn btn-ghost btn-sm" data-action="openProvider" data-provider="${p.id}">View</button></td>
+  </tr>`).join('')}</tbody></table></div>`;
+}
+function adminVerification(){
+  const pending = DB.providers.filter(p=>p.verification==='Pending');
+  return `<div class="main-head"><div><h1>Verification Queue</h1><p>Review and decide on new providers.</p></div></div>
+  ${pending.length? pending.map(p=>`
+    <div class="card">
+      <div class="row spread"><b>${esc(p.name)}</b><span class="badge badge-pending">Pending</span></div>
+      <div class="small muted" style="margin:6px 0;">${sectorOf(p.sectorId).name} · ${esc(p.address)}</div>
+      <div class="small">${esc(p.desc)}</div>
+      <div class="row gap-s" style="margin-top:12px;">
+        <button class="btn btn-success btn-sm" data-action="verifyProvider" data-provider="${p.id}" data-status="Verified">Approve</button>
+        <button class="btn btn-danger btn-sm" data-action="verifyProvider" data-provider="${p.id}" data-status="Rejected">Reject</button>
+      </div>
+    </div>`).join('') : `<div class="empty-state"><div class="ico">✅</div>No providers awaiting verification.</div>`}`;
+}
+function adminRequests(){
+  return `<div class="main-head"><div><h1>Service Requests</h1><p>Platform-wide request oversight.</p></div></div>
+  <div class="card"><table class="admin-table"><thead><tr><th>Service</th><th>Seeker</th><th>Provider</th><th>Status</th><th>Created</th></tr></thead>
+  <tbody>${DB.requests.slice().reverse().map(r=>{
+    const s = svc(r.serviceId); const seeker=DB.seekers.find(x=>x.id===r.seekerId); const p=DB.providers.find(x=>x.id===r.providerId);
+    return `<tr><td>${esc(s?s.name:'')}</td><td>${esc(seeker?seeker.name:'')}</td><td>${esc(p?p.name:'')}</td><td><span class="status-pill status-${r.status.replace(' ','-')}">${r.status}</span></td><td class="small muted">${fmtDate(r.createdAt)}</td></tr>`;
+  }).join('') || '<tr><td colspan="5" class="muted small">No requests yet.</td></tr>'}</tbody></table></div>`;
+}
+function adminDeals(){
+  const pending = DB.deals.filter(d=>d.status==='Pending');
+  const others = DB.deals.filter(d=>d.status!=='Pending');
+  return `<div class="main-head"><div><h1>Deals &amp; Promotions</h1><p>Approve or reject provider submissions.</p></div></div>
+  <b class="small muted">Pending approval</b>
+  <div style="margin:10px 0 24px;">
+  ${pending.length? pending.map(d=>{
+    const p = DB.providers.find(x=>x.id===d.providerId);
+    return `<div class="card"><div class="row spread"><b>${esc(d.title)}</b><span class="badge badge-pending">Pending</span></div>
+    <div class="small muted" style="margin:6px 0;">${esc(p?p.name:'')}</div><div class="small">${esc(d.description)}</div>
+    <div class="row gap-s" style="margin-top:12px;"><button class="btn btn-success btn-sm" data-action="setDealStatus" data-deal="${d.id}" data-status="Approved">Approve</button><button class="btn btn-danger btn-sm" data-action="setDealStatus" data-deal="${d.id}" data-status="Rejected">Reject</button></div></div>`;
+  }).join('') : `<div class="empty-state"><div class="ico">🏷️</div>Nothing pending.</div>`}
+  </div>
+  <b class="small muted">Decided</b>
+  <div style="margin-top:10px;">
+  ${others.map(d=>`<div class="card"><div class="row spread"><b>${esc(d.title)}</b><span class="badge ${d.status==='Approved'?'badge-verified':'badge-rejected'}">${d.status}</span></div></div>`).join('') || '<div class="small muted">—</div>'}
+  </div>`;
+}
+function adminReviews(){
+  const pending = DB.reviews.filter(r=>r.moderation==='pending');
+  return `<div class="main-head"><div><h1>Reviews</h1><p>Moderate seeker reviews before they go public.</p></div></div>
+  ${pending.length? pending.map(r=>{
+    const p = DB.providers.find(x=>x.id===r.providerId);
+    return `<div class="card"><div class="row spread"><b>${esc(p?p.name:'')}</b><span class="rating-stars">${starString(r.rating)}</span></div><div class="small" style="margin-top:6px;">${esc(r.comment)}</div>
+    <div class="row gap-s" style="margin-top:12px;"><button class="btn btn-success btn-sm" data-action="modReview" data-review="${r.id}" data-status="approved">Approve</button><button class="btn btn-danger btn-sm" data-action="modReview" data-review="${r.id}" data-status="rejected">Reject</button></div></div>`;
+  }).join('') : `<div class="empty-state"><div class="ico">⭐</div>No reviews awaiting moderation.</div>`}`;
+}
+function adminAudit(){
+  return `<div class="main-head"><div><h1>Audit Log</h1><p>Recent platform actions.</p></div></div>
+  <div class="card">${DB.auditLog.slice(0,40).map(l=>`<div class="timeline-item" style="margin-bottom:8px;"><span class="dot"></span><span>${fmtDate(l.ts)} · <b>${esc(l.actor)}</b> — ${esc(l.action)}</span></div>`).join('')}</div>`;
+}
+
+/* ---------------------------- LEAFLET MAP ---------------------------- */
+let leafletMap = null, leafletMarkers = [];
+async function initLeafletMap(){
+  const el = document.getElementById('leaflet-map');
+  if(!el || typeof L==='undefined') return;
+  if(leafletMap){ leafletMap.remove(); leafletMap=null; }
+  leafletMap = L.map(el).setView([GONDAR_CENTER.lat, GONDAR_CENTER.lng], 13);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution:'&copy; OpenStreetMap contributors', maxZoom:19
+  }).addTo(leafletMap);
+  paintMarkers();
+}
+function paintMarkers(){
+  if(!leafletMap) return;
+  leafletMarkers.forEach(m=>leafletMap.removeLayer(m));
+  leafletMarkers = [];
+  const filter = state.sub.mapSectorFilter;
+  const list = filter ? DB.providers.filter(p=>p.sectorId===filter) : DB.providers;
+  list.forEach(p=>{
+    const isHighlighted = state.sub.highlightProvider===p.id;
+    const color = isHighlighted ? '#0B6FD1' : (p.verification==='Verified' ? '#2396FF' : '#B9791E');
+    const icon = L.divIcon({
+      className:'', html:`<div style="width:${isHighlighted?20:14}px;height:${isHighlighted?20:14}px;border-radius:50%;background:${color};border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.35);"></div>`,
+      iconSize:[isHighlighted?20:14, isHighlighted?20:14], iconAnchor:[isHighlighted?10:7, isHighlighted?10:7]
+    });
+    const marker = L.marker([p.lat, p.lng], {icon}).addTo(leafletMap);
+    marker.bindPopup(`<b>${esc(p.name)}</b><br><span style="font-size:12px;color:#5B6B82;">${sectorOf(p.sectorId).name} · ${p.verification}</span><br><a href="#" onclick="window.__openProviderFromMap('${p.id}');return false;" style="font-size:12px;">View details →</a>`);
+    leafletMarkers.push(marker);
+  });
+  if(state.sub.highlightProvider){
+    const hp = DB.providers.find(p=>p.id===state.sub.highlightProvider);
+    if(hp) leafletMap.setView([hp.lat, hp.lng], 15);
+  }
+}
+window.__openProviderFromMap = function(id){ openProviderModal(id); };
+
+/* ---------------------------- EVENT HANDLERS ---------------------------- */
+function openProviderModal(id){
+  state.sub.modal = {type:'providerDetail', providerId:id};
+  render();
+}
+function closeModal(){ state.sub.modal = null; render(); }
+
+async function afterRender(){
+  if(state.view==='landing') startHeroTyping();
+  if(state.view==='providerOnboard') wireProviderOnboardServiceSelect();
+  if(document.getElementById('leaflet-map')) await initLeafletMap();
+  wireForms();
+}
+
+function wireProviderOnboardServiceSelect(){
+  const sectorSel = document.querySelector('select[name="sectorId"]');
+  const svcSel = document.getElementById('providerServiceSelect');
+  function refresh(){
+    const services = SERVICES.filter(s=>s.sectorId===sectorSel.value);
+    svcSel.innerHTML = services.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
+  }
+  sectorSel.addEventListener('change', refresh);
+  refresh();
+}
+
+function wireForms(){
+  document.querySelectorAll('form[data-form]').forEach(f=>{
+    f.addEventListener('submit', handleFormSubmit);
+  });
+}
+
+async function handleFormSubmit(e){
+  e.preventDefault();
+  const form = e.currentTarget;
+  const type = form.dataset.form;
+  const data = Object.fromEntries(new FormData(form).entries());
+
+  if(type==='seekerOnboard'){
+    const seeker = {id:uid('seeker'), name:data.name, contact:data.contact, location:data.location||'Gondar', createdAt:nowISO()};
+    DB.seekers.push(seeker);
+    SESSION = {role:'seeker', seekerId:seeker.id, providerId:null, isAdmin:false};
+    log(`New seeker registered: ${seeker.name}`);
+    await saveDB(); await saveSession();
+    toast('Welcome, '+seeker.name.split(' ')[0]+'!');
+    state.view='seeker'; state.seekerNav='home'; render();
+  }
+  else if(type==='providerOnboard'){
+    const provider = {
+      id:uid('prov'), name:data.name, sectorId:data.sectorId, serviceIds:[data.serviceId],
+      lat: GONDAR_CENTER.lat + (Math.random()-0.5)*0.03, lng: GONDAR_CENTER.lng + (Math.random()-0.5)*0.03,
+      address:data.address, phone:data.phone, hours:data.hours||'By appointment', priceInfo:data.priceInfo||'Price on request',
+      desc:data.desc, verification:'Pending', createdAt:nowISO()
+    };
+    DB.providers.push(provider);
+    SESSION = {role:'provider', seekerId:null, providerId:provider.id, isAdmin:false};
+    log(`New provider submitted for verification: ${provider.name}`);
+    await saveDB(); await saveSession();
+    toast('Profile submitted — pending verification.');
+    state.view='provider'; state.providerNav='dashboard'; render();
+  }
+  else if(type==='adminLogin'){
+    if((data.passcode||'').trim().toUpperCase()==='DEMO'){
+      SESSION = {role:null, seekerId:SESSION.seekerId, providerId:SESSION.providerId, isAdmin:true};
+      await saveSession();
+      toast('Welcome, Administrator.');
+      state.view='admin'; state.adminNav='dashboard'; render();
+    } else {
+      toast('Incorrect passcode. Try "DEMO".');
+    }
+  }
+  else if(type==='createRequest'){
+    const providerId = form.dataset.provider;
+    const seeker = currentSeeker();
+    if(!seeker){ toast('Please sign in as a Seeker first.'); return; }
+    const request = {
+      id:uid('req'), seekerId:seeker.id, providerId, serviceId:data.serviceId,
+      description:data.description, urgency:data.urgency, preferredTime:data.preferredTime||'',
+      location:data.location||seeker.location, status:'New', createdAt:nowISO(),
+      events:[{status:'New', ts:nowISO(), note:'Request submitted by seeker'}]
+    };
+    DB.requests.push(request);
+    log(`Request created for ${svc(data.serviceId)?.name} → ${DB.providers.find(p=>p.id===providerId)?.name}`);
+    await saveDB();
+    toast('Request sent!');
+    state.sub.modal=null;
+    state.seekerNav='requests';
+    render();
+  }
+  else if(type==='createReview'){
+    const requestId = form.dataset.request;
+    const req = DB.requests.find(r=>r.id===requestId);
+    const review = {id:uid('rev'), requestId, providerId:req.providerId, seekerId:req.seekerId, rating:parseInt(data.rating,10), comment:data.comment, moderation:'pending', createdAt:nowISO()};
+    DB.reviews.push(review);
+    log(`New review submitted for ${DB.providers.find(p=>p.id===req.providerId)?.name}`);
+    await saveDB();
+    toast('Review submitted for moderation.');
+    state.sub.modal=null;
+    render();
+  }
+  else if(type==='createDeal'){
+    const p = currentProvider();
+    const deal = {id:uid('deal'), providerId:p.id, title:data.title, serviceId:data.serviceId, description:data.description, startAt:data.startAt, endAt:data.endAt, terms:data.terms||'', status:'Pending', createdAt:nowISO()};
+    DB.deals.push(deal);
+    log(`New deal submitted: ${deal.title}`);
+    await saveDB();
+    toast('Deal submitted for approval.');
+    state.sub.modal=null;
+    render();
+  }
+  else if(type==='chatSend'){
+    const text = data.text.trim();
+    if(!text) return;
+    form.reset();
+    await handleChatMessage(text);
+  }
+}
+
+async function handleChatMessage(text){
+  state.sub.chat.push({who:'user', text});
+  state.sub.aiThinking = true;
+  render();
+  scrollChatToBottom();
+
+  const result = await omniAIProcess(text);
+  state.sub.aiThinking = false;
+
+  if(result.mode==='keyword' || result.mode==='llm'){
+    const s = result.service;
+    const loc = await getSeekerLocation();
+    const providers = rankProviders(DB.providers.filter(p=>p.serviceIds.includes(s.id)), loc);
+    state.sub.aiProviders = providers;
+    const tag = result.mode==='keyword' ? 'Matched instantly · keyword engine' : 'Understood via language model';
+    const reply = result.reply || `It sounds like you need ${s.name}. I found ${providers.length} provider${providers.length===1?'':'s'} nearby.`;
+    state.sub.chat.push({who:'ai', tag, text: reply});
+    if(providers.length){
+      state.sub.highlightProvider = providers[0].id;
+    }
+  } else if(result.mode==='clarify-tie'){
+    state.sub.chat.push({who:'ai', tag:'Needs clarification', text: result.reply});
+  } else {
+    state.sub.chat.push({who:'ai', tag:'Needs clarification', text: (result.reply||'') + ' ' + (result.question||'')});
+  }
+  render();
+  scrollChatToBottom();
+}
+function scrollChatToBottom(){
+  requestAnimationFrame(()=>{ const log=document.getElementById('chatLog'); if(log) log.scrollTop = log.scrollHeight; });
+}
+
+document.addEventListener('click', async (e)=>{
+  const el = e.target.closest('[data-action]');
+  if(!el) return;
+  const action = el.dataset.action;
+
+  if(action==='go'){ state.view = el.dataset.view; state.sub={}; render(); }
+  else if(action==='scrollTo'){ const t=document.getElementById(el.dataset.target); t && t.scrollIntoView({behavior:'smooth'}); }
+  else if(action==='openAbout'){ state.sub.modal={type:'about'}; render(); }
+  else if(action==='closeModal'){ closeModal(); }
+  else if(action==='logout'){ SESSION={role:null,seekerId:null,providerId:null,isAdmin:false}; await saveSession(); state.view='landing'; state.sub={}; render(); }
+
+  else if(action==='seekerNav'){ state.seekerNav = el.dataset.nav; state.sub.selectedSector=null; state.sub.selectedService=null; render(); }
+  else if(action==='providerNav'){ state.providerNav = el.dataset.nav; render(); }
+  else if(action==='adminNav'){ state.adminNav = el.dataset.nav; render(); }
+
+  else if(action==='openSector'){ state.seekerNav='services'; state.sub.selectedSector=el.dataset.sector; state.sub.selectedService=null; render(); }
+  else if(action==='openService'){ state.seekerNav='services'; state.sub.selectedService=el.dataset.service; render(); }
+  else if(action==='openProvider'){ openProviderModal(el.dataset.provider); }
+  else if(action==='openRequestForm'){ state.sub.modal={type:'requestForm', providerId:el.dataset.provider}; render(); }
+  else if(action==='openReviewForm'){ state.sub.modal={type:'reviewForm', requestId:el.dataset.req}; render(); }
+  else if(action==='openDealForm'){ state.sub.modal={type:'dealForm'}; render(); }
+
+  else if(action==='homeAISubmit'){
+    const input = document.getElementById('homeAIInput');
+    const text = input.value.trim();
+    if(!text) return;
+    state.seekerNav='ai';
+    state.sub.chat = [{who:'ai', text:"Hi — I'm OMNI AI. Tell me what you need help with, in your own words."}];
+    render();
+    await handleChatMessage(text);
+  }
+  else if(action==='chatSuggest'){
+    document.querySelector('input[name="text"]').value = el.dataset.text;
+    await handleChatMessage(el.dataset.text);
+  }
+
+  else if(action==='mapFilterSector'){ state.sub.mapSectorFilter = el.dataset.sector || null; render(); }
+  else if(action==='focusOnMap'){ state.sub.highlightProvider = el.dataset.provider; state.sub.modal=null; state.seekerNav='map'; render(); }
+
+  else if(action==='setReqStatus'){
+    const r = DB.requests.find(x=>x.id===el.dataset.req);
+    r.status = el.dataset.status;
+    r.events.push({status:el.dataset.status, ts:nowISO(), note:''});
+    log(`Request ${r.id} status → ${el.dataset.status}`);
+    await saveDB(); toast('Status updated: '+el.dataset.status); render();
+  }
+  else if(action==='verifyProvider'){
+    const p = DB.providers.find(x=>x.id===el.dataset.provider);
+    p.verification = el.dataset.status;
+    log(`Provider "${p.name}" set to ${el.dataset.status}`);
+    await saveDB(); toast(p.name+' → '+el.dataset.status); render();
+  }
+  else if(action==='setDealStatus'){
+    const d = DB.deals.find(x=>x.id===el.dataset.deal);
+    d.status = el.dataset.status;
+    log(`Deal "${d.title}" → ${el.dataset.status}`);
+    await saveDB(); toast('Deal '+el.dataset.status.toLowerCase()); render();
+  }
+  else if(action==='modReview'){
+    const r = DB.reviews.find(x=>x.id===el.dataset.review);
+    r.moderation = el.dataset.status;
+    log(`Review moderated: ${el.dataset.status}`);
+    await saveDB(); toast('Review '+el.dataset.status); render();
+  }
+
+  else if(action==='quickRole'){
+    const role = el.dataset.role;
+    if(role==='seeker'){
+      if(!currentSeeker()){ state.view='seekerOnboard'; }
+      else { SESSION.role='seeker'; await saveSession(); state.view='seeker'; state.seekerNav='home'; }
+    } else if(role==='provider'){
+      if(!currentProvider()){ state.view='providerOnboard'; }
+      else { SESSION.role='provider'; await saveSession(); state.view='provider'; state.providerNav='dashboard'; }
+    } else if(role==='admin'){
+      if(!SESSION.isAdmin){ state.view='adminLogin'; }
+      else { state.view='admin'; state.adminNav='dashboard'; }
+    }
+    state.sub={};
+    render();
+  }
+  else if(action==='hideDemoSwitcher'){ state.showDemoSwitcher=false; render(); }
+});
+
+/* ---------------------------- BOOT ---------------------------- */
+(async function boot(){
+  await loadDB();
+  await loadSession();
+  if(SESSION.isAdmin){ state.view='admin'; }
+  else if(SESSION.role==='provider' && SESSION.providerId){ state.view='provider'; }
+  else if(SESSION.role==='seeker' && SESSION.seekerId){ state.view='seeker'; }
+  render();
+})();
+</script>
+</body>
+</html>

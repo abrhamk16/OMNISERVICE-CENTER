@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>E-Delala — Admin: Support Messages</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Noto+Sans+Ethiopic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/tokens.css">
+<link rel="stylesheet" href="../css/base.css">
+<style>.support-card{border:1px solid var(--mist-line); border-radius:var(--radius-m); padding:1.2rem; margin-bottom:1rem;}</style>
+</head>
+<body>
+<div id="site-header"></div>
+<div class="dash-shell">
+  <aside class="dash-sidebar" id="dash-sidebar"></aside>
+  <main class="dash-main">
+    <h1 data-i18n="adminSupport.title"></h1>
+    <div id="list"></div>
+    <div class="empty-state" id="empty" style="display:none;"><div class="icon">💬</div><p data-i18n="adminSupport.empty"></p></div>
+  </main>
+</div>
+<script src="../js/i18n/en.js"></script>
+<script src="../js/i18n/am.js"></script>
+<script src="../js/i18n.js"></script>
+<script src="../js/store.js"></script>
+<script src="../js/app.js"></script>
+<script>
+  const user = EDELALA.guardRole('ADMIN');
+  if(user){
+    EDELALA.renderHeader('admin');
+    EDELALA.renderDashSidebar('admin', 'support.html');
+
+    function statusBadge(status){
+      return status === 'RESOLVED' ? `<span class="badge badge-verified">${I18N.t('contact.status.RESOLVED')}</span>` : `<span class="badge badge-pending">${I18N.t('contact.status.OPEN')}</span>`;
+    }
+
+    function refresh(){
+      const items = DB.allSupportMessages();
+      document.getElementById('list').innerHTML = items.map(m=>`
+        <div class="support-card">
+          <div class="cluster" style="justify-content:space-between;">
+            <div>
+              <strong>${EDELALA.escapeHtml(m.name)}</strong>
+              <span class="text-soft" style="font-size:.85rem;"> · ${I18N.t('contact.subject.'+m.subject)}</span>
+            </div>
+            ${statusBadge(m.status)}
+          </div>
+          <div class="text-soft" style="font-size:.85rem;margin:.3rem 0;">
+            ${m.email ? '✉️ ' + EDELALA.escapeHtml(m.email) + ' ' : ''}${m.phone ? '📞 ' + EDELALA.escapeHtml(m.phone) : ''}
+          </div>
+          <p style="margin:.4rem 0;">${EDELALA.escapeHtml(m.message)}</p>
+          <div class="text-soft" style="font-size:.8rem;margin-bottom:.7rem;">${EDELALA.timeAgo(m.createdAt)}</div>
+          ${m.status !== 'RESOLVED' ? `<button class="btn btn-outline btn-sm" data-resolve="${m.id}" data-i18n="adminSupport.markResolved"></button>` : ''}
+        </div>`).join('');
+      document.getElementById('empty').style.display = items.length ? 'none' : 'block';
+      I18N.applyTranslations();
+      document.querySelectorAll('[data-resolve]').forEach(btn=>btn.addEventListener('click', ()=>{
+        DB.updateSupportMessageStatus(btn.getAttribute('data-resolve'), 'RESOLVED');
+        refresh();
+      }));
+    }
+    document.addEventListener('edelala:langchange', refresh);
+    refresh();
+  }
+</script>
+</body>
+</html>

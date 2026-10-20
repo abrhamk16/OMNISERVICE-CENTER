@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>E-Delala — Delala Profile</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Noto+Sans+Ethiopic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/tokens.css">
+<link rel="stylesheet" href="../css/base.css">
+<style>
+  .profile-form{max-width:560px;}
+  .photo-row{display:flex; align-items:center; gap:1rem; margin-bottom:1.2rem;}
+  .photo-row img{width:72px;height:72px;border-radius:50%;object-fit:cover;}
+</style>
+</head>
+<body>
+<div id="site-header"></div>
+<div class="dash-shell">
+  <aside class="dash-sidebar" id="dash-sidebar"></aside>
+  <main class="dash-main">
+    <h1 data-i18n="agentProfileEdit.title"></h1>
+    <div class="demo-note" style="max-width:560px;">
+      <strong data-i18n="agentProfileEdit.photoWarningTitle"></strong>
+      <div style="margin-top:.3rem;" data-i18n="agentProfileEdit.photoWarning"></div>
+    </div>
+    <form id="profile-form" class="profile-form">
+      <div class="photo-row">
+        <img id="photo-preview" src="" alt="">
+        <div>
+          <input type="file" id="photo-input" accept="image/png,image/jpeg,image/webp" style="display:none;">
+          <button type="button" class="btn btn-outline btn-sm" id="photo-btn" data-i18n="agentProfileEdit.photo"></button>
+        </div>
+      </div>
+      <div class="field"><label data-i18n="agentProfileEdit.businessName"></label><input type="text" id="p-business"></div>
+      <div class="field"><label data-i18n="agentProfileEdit.description"></label><textarea id="p-desc"></textarea></div>
+      <div class="form-row">
+        <div class="field"><label data-i18n="agentProfileEdit.phone"></label><input type="tel" id="p-phone"></div>
+        <div class="field"><label data-i18n="agentProfileEdit.location"></label>
+          <select id="p-city"></select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="field"><label data-i18n="agentProfileEdit.facebook"></label><input type="text" id="p-fb"></div>
+        <div class="field"><label data-i18n="agentProfileEdit.telegram"></label><input type="text" id="p-tg"></div>
+      </div>
+      <div class="field"><label data-i18n="agentProfileEdit.instagram"></label><input type="text" id="p-ig"></div>
+      <button class="btn btn-primary" type="submit" data-i18n="profile.save"></button>
+    </form>
+  </main>
+</div>
+<script src="../js/i18n/en.js"></script>
+<script src="../js/i18n/am.js"></script>
+<script src="../js/i18n.js"></script>
+<script src="../js/store.js"></script>
+<script src="../js/app.js"></script>
+<script>
+  const user = EDELALA.guardRole('AGENT');
+  if(user){
+    EDELALA.renderHeader('agent');
+    EDELALA.renderDashSidebar('agent', 'profile.html');
+    const profile = DB.getAgentProfile(user.id);
+    const citySel = document.getElementById('p-city');
+    citySel.innerHTML = DB.CITIES.map(c=>`<option value="${c}">${EDELALA.cityLabel(c)}</option>`).join('');
+
+    function fill(){
+      document.getElementById('photo-preview').src = profile.photo;
+      document.getElementById('p-business').value = profile.businessName;
+      document.getElementById('p-desc').value = profile.description;
+      document.getElementById('p-phone').value = profile.phone;
+      document.getElementById('p-city').value = profile.city;
+      document.getElementById('p-fb').value = profile.facebook;
+      document.getElementById('p-tg').value = profile.telegram;
+      document.getElementById('p-ig').value = profile.instagram;
+    }
+    fill();
+
+    let newPhoto = null;
+    document.getElementById('photo-btn').addEventListener('click', ()=>document.getElementById('photo-input').click());
+    document.getElementById('photo-input').addEventListener('change', async (e)=>{
+      const file = e.target.files[0];
+      if(!file) return;
+      newPhoto = await EDELALA.readImageCompressed(file);
+      if(newPhoto) document.getElementById('photo-preview').src = newPhoto;
+    });
+
+    document.getElementById('profile-form').addEventListener('submit', (e)=>{
+      e.preventDefault();
+      try {
+        DB.updateAgentProfile(user.id, {
+          businessName: document.getElementById('p-business').value.trim(),
+          description: document.getElementById('p-desc').value.trim(),
+          phone: document.getElementById('p-phone').value.trim(),
+          city: document.getElementById('p-city').value,
+          facebook: document.getElementById('p-fb').value.trim(),
+          telegram: document.getElementById('p-tg').value.trim(),
+          instagram: document.getElementById('p-ig').value.trim(),
+          photo: newPhoto || profile.photo
+        });
+        EDELALA.toast(I18N.t('profile.saved'), 'success');
+        EDELALA.renderHeader('agent');
+      } catch (err) {
+        EDELALA.toast(err && err.message === 'STORAGE_FULL' ? I18N.t('addListing.storageFull') : I18N.t('addListing.publishError'), 'error');
+      }
+    });
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>E-Delala — Verification</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Noto+Sans+Ethiopic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/tokens.css">
+<link rel="stylesheet" href="../css/base.css">
+<style>
+  .status-box{border-radius:var(--radius-m); padding:1.4rem; margin-bottom:1.6rem;}
+  .status-box.approved{background:var(--verified-bg); color:var(--verified);}
+  .status-box.pending{background:var(--pending-bg); color:var(--pending);}
+  .status-box.rejected{background:var(--alert-bg); color:var(--alert);}
+  .status-box.none{background:var(--mist); color:var(--ink-soft);}
+  .form-wrap{max-width:560px;}
+  .id-preview{max-width:240px; border-radius:var(--radius-s); margin-top:.6rem;}
+  .pay-steps{border:1px solid var(--mist-line); border-radius:var(--radius-m); padding:1.4rem 1.4rem 1.2rem; margin-bottom:1.6rem; background:var(--violet-50);}
+  .pay-steps ol{margin:.4rem 0 0; padding-left:1.2rem;}
+  .pay-steps li{margin-bottom:.6rem;}
+  .bank-card{display:flex; flex-wrap:wrap; gap:1rem; margin:.8rem 0 0;}
+  .bank-tile{background:#fff; border:1px solid var(--mist-line); border-radius:var(--radius-s); padding:.8rem 1rem; flex:1; min-width:200px;}
+  .bank-tile .label{font-size:.75rem; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.03em;}
+  .bank-tile .value{font-weight:700; font-family:var(--font-display); font-size:1.05rem; margin-top:.2rem;}
+  .fee-pill{display:inline-block; background:var(--violet-600); color:#fff; font-weight:700; border-radius:999px; padding:.3rem .9rem; margin-top:.6rem;}
+  .upload-row{display:grid; grid-template-columns:1fr 1fr; gap:1.2rem;}
+  @media (max-width:600px){ .upload-row{grid-template-columns:1fr;} }
+</style>
+</head>
+<body>
+<div id="site-header"></div>
+<div class="dash-shell">
+  <aside class="dash-sidebar" id="dash-sidebar"></aside>
+  <main class="dash-main">
+    <h1 data-i18n="verification.title"></h1>
+    <div class="status-box" id="status-box"></div>
+
+    <div class="pay-steps" id="pay-steps">
+      <h3 style="margin-bottom:.2rem;" data-i18n="verification.howToTitle"></h3>
+      <p class="text-soft" style="margin:0;" data-i18n="verification.howToSubtitle"></p>
+      <ol>
+        <li data-i18n="verification.step1"></li>
+        <li data-i18n="verification.step2"></li>
+        <li data-i18n="verification.step3"></li>
+        <li data-i18n="verification.step4"></li>
+      </ol>
+      <div class="bank-card">
+        <div class="bank-tile">
+          <div class="label">Telebirr</div>
+          <div class="value" id="telebirr-number"></div>
+        </div>
+        <div class="bank-tile">
+          <div class="label" data-i18n="verification.cbeLabel"></div>
+          <div class="value" id="cbe-account"></div>
+        </div>
+      </div>
+      <div class="fee-pill" id="fee-pill"></div>
+    </div>
+
+    <div class="form-wrap" id="form-wrap">
+      <form id="verify-form">
+        <div class="field">
+          <label data-i18n="verification.idType"></label>
+          <select id="v-idtype">
+            <option value="national" data-i18n="verification.idType.national"></option>
+            <option value="passport" data-i18n="verification.idType.passport"></option>
+            <option value="license" data-i18n="verification.idType.license"></option>
+          </select>
+        </div>
+        <div class="upload-row">
+          <div class="field">
+            <label data-i18n="verification.idPhoto"></label>
+            <input type="file" id="v-idphoto" accept="image/png,image/jpeg,image/webp">
+            <img id="v-id-preview" class="id-preview" style="display:none;">
+          </div>
+          <div class="field">
+            <label data-i18n="verification.paymentScreenshot"></label>
+            <input type="file" id="v-payphoto" accept="image/png,image/jpeg,image/webp">
+            <img id="v-pay-preview" class="id-preview" style="display:none;">
+          </div>
+        </div>
+        <div class="field">
+          <label data-i18n="verification.paymentMethod"></label>
+          <select id="v-paymethod">
+            <option value="telebirr">Telebirr</option>
+            <option value="cbe" data-i18n="verification.cbeLabel"></option>
+          </select>
+        </div>
+        <div class="field"><label data-i18n="verification.additionalInfo"></label><textarea id="v-info"></textarea></div>
+        <p class="text-soft" style="font-size:.82rem;" data-i18n="verification.privacyNote"></p>
+        <button class="btn btn-primary" type="submit" data-i18n="verification.submit"></button>
+      </form>
+    </div>
+  </main>
+</div>
+<script src="../js/i18n/en.js"></script>
+<script src="../js/i18n/am.js"></script>
+<script src="../js/i18n.js"></script>
+<script src="../js/store.js"></script>
+<script src="../js/app.js"></script>
+<script>
+  const user = EDELALA.guardRole('AGENT');
+  if(user){
+    EDELALA.renderHeader('agent');
+    EDELALA.renderDashSidebar('agent', 'verification.html');
+    let idPhoto = null;
+    let payPhoto = null;
+
+    function renderBankInfo(){
+      const s = DB.getSettings();
+      document.getElementById('telebirr-number').textContent = s.telebirrNumber;
+      document.getElementById('cbe-account').textContent = s.cbeAccount;
+      document.getElementById('fee-pill').textContent = I18N.t('verification.feeLabel', { amount: EDELALA.formatETB(s.verificationFee) });
+    }
+
+    function refresh(){
+      const profile = DB.getAgentProfile(user.id);
+      const v = profile.verification;
+      const box = document.getElementById('status-box');
+      const map = { APPROVED:['approved','🟢'], PENDING:['pending','🟡'], REJECTED:['rejected','🔴'], NONE:['none','⚪'] };
+      const [cls, icon] = map[v.status] || map.NONE;
+      box.className = 'status-box ' + cls;
+      box.innerHTML = `<strong>${icon} ${I18N.t('verification.status.'+v.status)}</strong>` + (v.status==='REJECTED' && v.rejectedReason ? `<p style="margin:.5rem 0 0;">${I18N.t('verification.rejectedReason')}: ${EDELALA.escapeHtml(v.rejectedReason)}</p>` : '');
+      const hideForm = (v.status === 'APPROVED' || v.status === 'PENDING');
+      document.getElementById('form-wrap').style.display = hideForm ? 'none' : 'block';
+      document.getElementById('pay-steps').style.display = hideForm ? 'none' : 'block';
+      renderBankInfo();
+      I18N.applyTranslations();
+    }
+    refresh();
+
+    document.getElementById('v-idphoto').addEventListener('change', async (e)=>{
+      const file = e.target.files[0];
+      if(!file) return;
+      idPhoto = await EDELALA.readImageCompressed(file);
+      const img = document.getElementById('v-id-preview');
+      img.src = idPhoto; img.style.display='block';
+    });
+    document.getElementById('v-payphoto').addEventListener('change', async (e)=>{
+      const file = e.target.files[0];
+      if(!file) return;
+      payPhoto = await EDELALA.readImageCompressed(file);
+      const img = document.getElementById('v-pay-preview');
+      img.src = payPhoto; img.style.display='block';
+    });
+
+    document.getElementById('verify-form').addEventListener('submit', (e)=>{
+      e.preventDefault();
+      if(!idPhoto){ EDELALA.toast(I18N.t('verification.idRequired'), 'error'); return; }
+      if(!payPhoto){ EDELALA.toast(I18N.t('verification.paymentRequired'), 'error'); return; }
+      try {
+        DB.submitVerification(user.id, {
+          idType: document.getElementById('v-idtype').value,
+          idPhoto,
+          paymentScreenshot: payPhoto,
+          paymentMethod: document.getElementById('v-paymethod').value,
+          paymentAmount: DB.getSettings().verificationFee
+        });
+        EDELALA.toast(I18N.t('verification.submitted'), 'success');
+        refresh();
+      } catch (err) {
+        EDELALA.toast(err && err.message === 'STORAGE_FULL' ? I18N.t('addListing.storageFull') : I18N.t('addListing.publishError'), 'error');
+      }
+    });
+    document.addEventListener('edelala:langchange', refresh);
+  }
+</script>
+</body>
+</html>

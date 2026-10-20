@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>E-Delala — Listing</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Noto+Sans+Ethiopic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/tokens.css">
+<link rel="stylesheet" href="../css/base.css">
+<style>
+  .listing-shell{display:grid; grid-template-columns:1.6fr 1fr; gap:2.5rem; align-items:flex-start;}
+  .gallery-main{border-radius:var(--radius-l); overflow:hidden; aspect-ratio:16/10; background:var(--mist); margin-bottom:.7rem;}
+  .gallery-main img{width:100%;height:100%;object-fit:cover;}
+  .gallery-thumbs{display:flex; gap:.6rem; flex-wrap:wrap;}
+  .gallery-thumbs img{width:74px;height:56px;object-fit:cover;border-radius:var(--radius-s); cursor:pointer; border:2px solid transparent;}
+  .gallery-thumbs img.active{border-color:var(--violet-600);}
+  .spec-grid{display:grid; grid-template-columns:1fr 1fr; gap:.8rem 1.5rem; margin:1.2rem 0;}
+  .spec-grid .spec-label{color:var(--ink-soft); font-size:.82rem;}
+  .spec-grid .spec-value{font-weight:600;}
+  .agent-box{border:1px solid var(--mist-line); border-radius:var(--radius-m); padding:1.4rem;}
+  .agent-box .top{display:flex; gap:.9rem; align-items:center; margin-bottom:1rem;}
+  .agent-box img{width:56px;height:56px;border-radius:50%;object-fit:cover;}
+  .price-box{font-family:var(--font-display); font-size:1.9rem; font-weight:700; color:var(--violet-800,var(--violet-700)); margin-bottom:.3rem;}
+  .action-row{display:flex; gap:.7rem; margin-top:1rem; flex-wrap:wrap;}
+  .reviews-section{margin-top:2rem; border-top:1px solid var(--mist-line); padding-top:1.6rem;}
+  .review-item{border:1px solid var(--mist-line); border-radius:var(--radius-m); padding:1rem 1.1rem; margin-bottom:.9rem;}
+  .review-item .stars{color:#D9A441; font-size:.95rem; letter-spacing:1px;}
+  .star-picker{display:flex; gap:.3rem; font-size:1.6rem; cursor:pointer; color:var(--mist-line); margin-bottom:.8rem;}
+  .star-picker span.filled{color:#D9A441;}
+  @media (max-width:900px){ .listing-shell{grid-template-columns:1fr;} }
+</style>
+</head>
+<body>
+<div id="site-header"></div>
+<div class="wrap section-tight" id="listing-root">
+  <p class="text-soft" id="loading-msg" data-i18n="common.loading"></p>
+</div>
+<div id="site-footer"></div>
+
+<!-- Request modal -->
+<div class="modal-overlay" id="request-modal" style="display:none;">
+  <div class="modal">
+    <h3 data-i18n="request.title"></h3>
+    <form id="request-form" novalidate>
+      <div class="field"><label data-i18n="request.name"></label><input type="text" id="rq-name" required></div>
+      <div class="field"><label data-i18n="request.phone"></label><input type="tel" id="rq-phone" required></div>
+      <div class="field"><label data-i18n="request.email"></label><input type="email" id="rq-email"></div>
+      <div class="field"><label data-i18n="request.preferredTime"></label><input type="text" id="rq-time"></div>
+      <div class="field"><label data-i18n="request.description"></label><textarea id="rq-desc"></textarea></div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" data-close-modal data-i18n="common.cancel"></button>
+        <button type="submit" class="btn btn-primary" data-i18n="request.submit"></button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Report modal -->
+<div class="modal-overlay" id="report-modal" style="display:none;">
+  <div class="modal">
+    <h3 data-i18n="listing.report"></h3>
+    <form id="report-form" novalidate>
+      <div class="field">
+        <label data-i18n="report.reasonLabel"></label>
+        <select id="rp-reason">
+          <option value="fake" data-i18n="report.reason.fake"></option>
+          <option value="wrongInfo" data-i18n="report.reason.wrongInfo"></option>
+          <option value="suspiciousAgent" data-i18n="report.reason.suspiciousAgent"></option>
+          <option value="wrongPrice" data-i18n="report.reason.wrongPrice"></option>
+          <option value="inappropriate" data-i18n="report.reason.inappropriate"></option>
+          <option value="other" data-i18n="report.reason.other"></option>
+        </select>
+      </div>
+      <div class="field"><label data-i18n="report.detailsLabel"></label><textarea id="rp-details"></textarea></div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" data-close-modal data-i18n="common.cancel"></button>
+        <button type="submit" class="btn btn-danger" data-i18n="report.submit"></button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="../js/i18n/en.js"></script>
+<script src="../js/i18n/am.js"></script>
+<script src="../js/i18n.js"></script>
+<script src="../js/store.js"></script>
+<script src="../js/app.js"></script>
+<script>
+  EDELALA.renderHeader('customer');
+  EDELALA.renderFooter();
+
+  const id = EDELALA.qs('id');
+  const listing = id ? DB.getListing(id) : null;
+
+  function specRows(l){
+    const rows = [];
+    const d = l.details || {};
+    if(l.category === 'HOUSE'){
+      rows.push(['listing.bedrooms', d.bedrooms], ['listing.bathrooms', d.bathrooms], ['listing.propertyType', d.propertyType], ['listing.location', l.neighborhood + ', ' + EDELALA.cityLabel(l.city)]);
+    } else if(l.category === 'VEHICLE'){
+      rows.push(['listing.brand', d.brand], ['listing.model', d.model], ['listing.year', d.year], ['listing.condition', d.condition]);
+    } else if(l.category === 'MACHINERY'){
+      rows.push(['listing.machineType', d.machineType], ['listing.condition', d.condition]);
+    } else if(l.category === 'SERVICE'){
+      rows.push(['listing.experience', d.experience], ['listing.workplace', I18N.t('addListing.workplace.' + (d.workplace||'home').toLowerCase())], ['listing.skills', d.skills], ['listing.availability', I18N.t('addListing.availability.' + (d.availability==='Available'?'available':'unavailable'))]);
+    }
+    return rows.map(([k,v]) => `<div><div class="spec-label" data-i18n="${k}"></div><div class="spec-value">${EDELALA.escapeHtml(v ?? I18N.t('common.na'))}</div></div>`).join('');
+  }
+
+  function render(){
+    const root = document.getElementById('listing-root');
+    if(!listing){
+      root.innerHTML = `<div class="empty-state"><div class="icon">🔍</div><p data-i18n="common.notFound"></p><a class="btn btn-outline" href="browse.html" data-i18n="common.backHome"></a></div>`;
+      I18N.applyTranslations(root);
+      return;
+    }
+    const l = listing;
+    const images = l.images && l.images.length ? l.images : [DB.placeholderImg(l.title)];
+    const user = DB.currentUser();
+    const isFav = user && user.role==='CUSTOMER' && DB.isFavorite(user.id, l.id);
+    const priceSuffix = (l.category==='HOUSE' && l.purpose==='RENT') ? I18N.t('listing.month') : '';
+    const agent = l.agent;
+    const stamp = agent && agent.verification.status==='APPROVED' ? EDELALA.verifiedStampHtml('sm') : '';
+
+    root.innerHTML = `
+      <div class="listing-shell">
+        <div>
+          <div class="gallery-main"><img id="main-img" src="${images[0]}" alt="${EDELALA.escapeHtml(l.title)}"></div>
+          <div class="gallery-thumbs">
+            ${images.map((img,i)=>`<img src="${img}" data-idx="${i}" class="${i===0?'active':''}">`).join('')}
+          </div>
+          <h1 style="margin-top:1.4rem;">${EDELALA.escapeHtml(l.title)}</h1>
+          <div class="cluster text-soft" style="margin-bottom:.6rem;">
+            <span>${EDELALA.categoryIcon(l.category)} ${EDELALA.categoryLabel(l.category)}</span>
+            <span>· 📍 ${EDELALA.cityLabel(l.city)}</span>
+            <span>· ${EDELALA.timeAgo(l.createdAt)}</span>
+          </div>
+          <div class="spec-grid">${specRows(l)}</div>
+          <h3 data-i18n="listing.description"></h3>
+          <p>${EDELALA.escapeHtml(l.description)}</p>
+
+          <div class="reviews-section">
+            <h3 style="margin-bottom:.2rem;" data-i18n="listing.reviews"></h3>
+            <div id="rating-summary" class="text-soft" style="margin-bottom:1rem;"></div>
+            <div id="reviews-list"></div>
+            <div id="review-form-wrap" style="margin-top:1.2rem;"></div>
+          </div>
+        </div>
+        <div>
+          <div class="agent-box">
+            <div class="price-box">${EDELALA.formatETB(l.price)}${priceSuffix}</div>
+            <div class="text-soft" style="margin-bottom:1rem;font-size:.88rem;" data-i18n="listing.agentFee"></div>
+            <div style="font-weight:600;margin-top:-.8rem;margin-bottom:1rem;">${EDELALA.formatETB(l.agentFee)}</div>
+            ${agent ? `
+            <div class="top">
+              <img src="${agent.photo}" alt="">
+              <div>
+                <div style="font-weight:700;">${EDELALA.escapeHtml(agent.businessName)}</div>
+                <div class="text-soft" style="font-size:.85rem;">⭐ ${agent.trustRating.toFixed(1)} · 📍 ${EDELALA.cityLabel(agent.city)}</div>
+              </div>
+              ${stamp}
+            </div>` : ''}
+            <button class="btn btn-primary btn-block" id="request-btn" data-i18n="listing.requestThis"></button>
+            <div class="action-row">
+              ${agent ? `<a class="btn btn-outline btn-sm" href="agent-profile.html?id=${agent.userId}" data-i18n="listing.viewAgent"></a>` : ''}
+              <button class="btn btn-outline btn-sm" id="fav-btn">${isFav ? '❤️' : '🤍'} <span data-i18n="listing.save"></span></button>
+              <button class="btn btn-ghost btn-sm" id="report-btn" data-i18n="listing.report"></button>
+            </div>
+          </div>
+        </div>
+      </div>`;
+    I18N.applyTranslations(root);
+
+    root.querySelectorAll('.gallery-thumbs img').forEach(img=>{
+      img.addEventListener('click', ()=>{
+        document.getElementById('main-img').src = img.src;
+        root.querySelectorAll('.gallery-thumbs img').forEach(i=>i.classList.remove('active'));
+        img.classList.add('active');
+      });
+    });
+
+    document.getElementById('fav-btn').addEventListener('click', ()=>{
+      const u = DB.currentUser();
+      if(!u || u.role !== 'CUSTOMER'){ window.location.href = 'login.html'; return; }
+      const fav = DB.toggleFavorite(u.id, l.id);
+      EDELALA.toast(fav ? I18N.t('listing.saved') : I18N.t('listing.save'), 'success');
+      render();
+    });
+
+    document.getElementById('request-btn').addEventListener('click', ()=>{
+      const u = DB.currentUser();
+      if(u && u.role==='CUSTOMER'){
+        document.getElementById('rq-name').value = u.fullName;
+        document.getElementById('rq-phone').value = u.phone;
+        document.getElementById('rq-email').value = u.email;
+      }
+      document.getElementById('request-modal').style.display = 'flex';
+    });
+    document.getElementById('report-btn').addEventListener('click', ()=>{
+      document.getElementById('report-modal').style.display = 'flex';
+    });
+
+    renderReviews(l);
+  }
+
+  let selectedRating = 0;
+
+  function renderReviews(l){
+    const summary = DB.listingRatingSummary(l.id);
+    const summaryEl = document.getElementById('rating-summary');
+    summaryEl.textContent = summary.count
+      ? `⭐ ${summary.average.toFixed(1)} · ${summary.count} review${summary.count===1?'':'s'}`
+      : I18N.t('listing.noReviews');
+
+    const comments = DB.commentsForListing(l.id);
+    document.getElementById('reviews-list').innerHTML = comments.map(c=>`
+      <div class="review-item">
+        <div class="cluster" style="justify-content:space-between;">
+          <strong>${EDELALA.escapeHtml(c.customerName)}</strong>
+          <span class="stars">${'★'.repeat(c.rating)}${'☆'.repeat(5-c.rating)}</span>
+        </div>
+        <p style="margin:.4rem 0 0;">${EDELALA.escapeHtml(c.comment)}</p>
+        <div class="text-soft" style="font-size:.78rem;margin-top:.3rem;">${EDELALA.timeAgo(c.createdAt)}</div>
+      </div>`).join('') || `<p class="text-soft">${I18N.t('listing.noReviews')}</p>`;
+
+    const formWrap = document.getElementById('review-form-wrap');
+    const u = DB.currentUser();
+    if(!u || u.role !== 'CUSTOMER'){
+      formWrap.innerHTML = `<p class="text-soft">${I18N.t('listing.loginToReview')} <a href="login.html" style="color:var(--violet-700);font-weight:600;">${I18N.t('nav.login')}</a></p>`;
+      return;
+    }
+    selectedRating = 0;
+    formWrap.innerHTML = `
+      <h4 style="margin-bottom:.5rem;">${I18N.t('listing.addReview')}</h4>
+      <div class="star-picker" id="star-picker">
+        ${[1,2,3,4,5].map(n=>`<span data-star="${n}">☆</span>`).join('')}
+      </div>
+      <div class="field"><textarea id="review-comment" data-i18n-placeholder="listing.reviewPlaceholder" placeholder=""></textarea></div>
+      <button class="btn btn-primary btn-sm" id="review-submit-btn">${I18N.t('listing.submitReview')}</button>
+    `;
+    I18N.applyTranslations(formWrap);
+    const starEls = formWrap.querySelectorAll('#star-picker span');
+    starEls.forEach(el=>{
+      el.addEventListener('click', ()=>{
+        selectedRating = Number(el.getAttribute('data-star'));
+        starEls.forEach(s=>{
+          const isFilled = Number(s.getAttribute('data-star')) <= selectedRating;
+          s.textContent = isFilled ? '★' : '☆';
+          s.classList.toggle('filled', isFilled);
+        });
+      });
+    });
+    document.getElementById('review-submit-btn').addEventListener('click', ()=>{
+      const comment = document.getElementById('review-comment').value.trim();
+      if(!selectedRating){ EDELALA.toast(I18N.t('listing.ratingRequired'), 'error'); return; }
+      if(!comment){ EDELALA.toast(I18N.t('common.required'), 'error'); return; }
+      try {
+        DB.addComment({
+          listingId: l.id, agentId: l.agentId, customerId: u.id,
+          customerName: u.fullName, rating: selectedRating, comment
+        });
+        EDELALA.toast(I18N.t('listing.reviewSubmitted'), 'success');
+        renderReviews(l);
+      } catch (err) {
+        EDELALA.toast(err && err.message === 'STORAGE_FULL' ? I18N.t('addListing.storageFull') : I18N.t('addListing.publishError'), 'error');
+      }
+    });
+  }
+
+  document.querySelectorAll('[data-close-modal]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{ btn.closest('.modal-overlay').style.display='none'; });
+  });
+
+  document.getElementById('request-form').addEventListener('submit', (e)=>{
+    e.preventDefault();
+    const name = document.getElementById('rq-name').value.trim();
+    const phone = document.getElementById('rq-phone').value.trim();
+    if(!name || !phone){ EDELALA.toast(I18N.t('common.required'), 'error'); return; }
+    const u = DB.currentUser();
+    DB.createRequest({
+      listingId: listing.id, agentId: listing.agentId, customerId: u ? u.id : null,
+      name, phone, email: document.getElementById('rq-email').value.trim(),
+      description: document.getElementById('rq-desc').value.trim(),
+      preferredTime: document.getElementById('rq-time').value.trim()
+    });
+    document.getElementById('request-modal').style.display = 'none';
+    document.getElementById('request-form').reset();
+    EDELALA.toast(I18N.t('request.success'), 'success');
+  });
+
+  document.getElementById('report-form').addEventListener('submit', (e)=>{
+    e.preventDefault();
+    const u = DB.currentUser();
+    DB.createReport({
+      reporterId: u ? u.id : null, listingId: listing.id, agentId: listing.agentId,
+      reason: document.getElementById('rp-reason').value, description: document.getElementById('rp-details').value.trim()
+    });
+    document.getElementById('report-modal').style.display = 'none';
+    document.getElementById('report-form').reset();
+    EDELALA.toast(I18N.t('report.submitted'), 'success');
+  });
+
+  document.addEventListener('edelala:langchange', render);
+  render();
+</script>
+</body>
+</html>

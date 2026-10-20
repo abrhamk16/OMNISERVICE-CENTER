@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>E-Delala — Admin: All Requests</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Noto+Sans+Ethiopic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/tokens.css">
+<link rel="stylesheet" href="../css/base.css">
+</head>
+<body>
+<div id="site-header"></div>
+<div class="dash-shell">
+  <aside class="dash-sidebar" id="dash-sidebar"></aside>
+  <main class="dash-main">
+    <h1 data-i18n="adminRequests.title"></h1>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th data-i18n="request.name"></th><th data-i18n="listing.postedBy"></th><th data-i18n="adminReports.reportedAgent"></th><th>Status</th><th>Date</th></tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+  </main>
+</div>
+<script src="../js/i18n/en.js"></script>
+<script src="../js/i18n/am.js"></script>
+<script src="../js/i18n.js"></script>
+<script src="../js/store.js"></script>
+<script src="../js/app.js"></script>
+<script>
+  const user = EDELALA.guardRole('ADMIN');
+  if(user){
+    EDELALA.renderHeader('admin');
+    EDELALA.renderDashSidebar('admin', 'requests.html');
+    function statusBadge(status){
+      const cls = { NEW:'badge-neutral', CONTACTED:'badge-pending', IN_PROGRESS:'badge-pending', COMPLETED:'badge-verified', CANCELLED:'badge-alert' }[status] || 'badge-neutral';
+      return `<span class="badge ${cls}">${I18N.t('request.status.'+status)}</span>`;
+    }
+    function refresh(){
+      const db = DB.all();
+      const items = DB.allRequests();
+      document.getElementById('rows').innerHTML = items.map(r=>{
+        const agent = db.agentProfiles.find(a=>a.userId===r.agentId);
+        return `<tr>
+          <td>${EDELALA.escapeHtml(r.name)}</td>
+          <td>${r.listing ? EDELALA.escapeHtml(r.listing.title) : I18N.t('common.na')}</td>
+          <td>${agent ? EDELALA.escapeHtml(agent.businessName) : I18N.t('common.na')}</td>
+          <td>${statusBadge(r.status)}</td>
+          <td>${EDELALA.timeAgo(r.createdAt)}</td>
+        </tr>`;
+      }).join('');
+      I18N.applyTranslations();
+    }
+    document.addEventListener('edelala:langchange', refresh);
+    refresh();
+  }
+</script>
+</body>
+</html>

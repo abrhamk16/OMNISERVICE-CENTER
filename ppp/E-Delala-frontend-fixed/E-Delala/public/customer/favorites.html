@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>E-Delala — My Favorites</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Noto+Sans+Ethiopic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/tokens.css">
+<link rel="stylesheet" href="../css/base.css">
+<style>
+  .listing-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:1.3rem;}
+  @media (max-width:900px){ .listing-grid{grid-template-columns:repeat(2,1fr);} }
+  @media (max-width:520px){ .listing-grid{grid-template-columns:1fr;} }
+</style>
+</head>
+<body>
+<div id="site-header"></div>
+<div class="wrap section-tight">
+  <h1 data-i18n="favorites.title"></h1>
+  <div class="listing-grid" id="fav-grid"></div>
+  <div class="empty-state" id="empty" style="display:none;">
+    <div class="icon">🤍</div>
+    <p data-i18n="favorites.empty"></p>
+    <a class="btn btn-primary" href="browse.html" data-i18n="favorites.emptyCta"></a>
+  </div>
+</div>
+<div id="site-footer"></div>
+<script src="../js/i18n/en.js"></script>
+<script src="../js/i18n/am.js"></script>
+<script src="../js/i18n.js"></script>
+<script src="../js/store.js"></script>
+<script src="../js/app.js"></script>
+<script>
+  const user = EDELALA.guardRole('CUSTOMER');
+  if(user){
+    EDELALA.renderHeader('customer');
+    EDELALA.renderFooter();
+    function renderCard(l){
+      const img = l.images && l.images[0] ? l.images[0] : DB.placeholderImg(l.title);
+      return `<div class="listing-card" style="position:relative;">
+        <a href="listing.html?id=${l.id}" style="color:inherit;text-decoration:none;">
+          <div class="media"><img src="${img}" alt=""><span class="purpose-tag">${I18N.t(l.purpose==='RENT'?'filter.rent':'filter.sale')}</span></div>
+          <div class="body"><div class="price">${EDELALA.formatETB(l.price)}</div><div class="title">${EDELALA.escapeHtml(l.title)}</div>
+          <div class="meta">📍 ${EDELALA.cityLabel(l.city)}</div></div>
+        </a>
+        <button class="fav-btn" data-id="${l.id}">❤️</button>
+      </div>`;
+    }
+    function refresh(){
+      const items = DB.listFavorites(user.id);
+      document.getElementById('fav-grid').innerHTML = items.map(renderCard).join('');
+      document.getElementById('empty').style.display = items.length ? 'none' : 'block';
+      document.querySelectorAll('.fav-btn').forEach(btn=>{
+        btn.addEventListener('click', (e)=>{ e.preventDefault(); DB.toggleFavorite(user.id, btn.getAttribute('data-id')); refresh(); });
+      });
+      I18N.applyTranslations();
+    }
+    document.addEventListener('edelala:langchange', refresh);
+    refresh();
+  }
+</script>
+</body>
+</html>

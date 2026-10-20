@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>E-Delala — Admin: Reports</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Noto+Sans+Ethiopic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/tokens.css">
+<link rel="stylesheet" href="../css/base.css">
+<style>.report-card{border:1px solid var(--mist-line); border-radius:var(--radius-m); padding:1.2rem; margin-bottom:1rem;}</style>
+</head>
+<body>
+<div id="site-header"></div>
+<div class="dash-shell">
+  <aside class="dash-sidebar" id="dash-sidebar"></aside>
+  <main class="dash-main">
+    <h1 data-i18n="adminReports.title"></h1>
+    <div id="list"></div>
+    <div class="empty-state" id="empty" style="display:none;"><div class="icon">🚩</div><p data-i18n="adminReports.empty"></p></div>
+  </main>
+</div>
+<script src="../js/i18n/en.js"></script>
+<script src="../js/i18n/am.js"></script>
+<script src="../js/i18n.js"></script>
+<script src="../js/store.js"></script>
+<script src="../js/app.js"></script>
+<script>
+  const user = EDELALA.guardRole('ADMIN');
+  if(user){
+    EDELALA.renderHeader('admin');
+    EDELALA.renderDashSidebar('admin', 'reports.html');
+
+    function statusBadge(s){
+      const cls = { OPEN:'badge-alert', REVIEWED:'badge-pending', DISMISSED:'badge-neutral', RESOLVED:'badge-verified' }[s] || 'badge-neutral';
+      return `<span class="badge ${cls}">${I18N.t('adminReports.status.'+s)}</span>`;
+    }
+
+    function refresh(){
+      const items = DB.allReports();
+      document.getElementById('list').innerHTML = items.map(r=>`
+        <div class="report-card">
+          <div class="cluster" style="justify-content:space-between;">
+            <div style="font-weight:700;">${I18N.t('report.reason.'+r.reason)}</div>
+            ${statusBadge(r.status)}
+          </div>
+          <div class="text-soft" style="font-size:.85rem;margin:.3rem 0;">
+            ${I18N.t('adminReports.reporter')}: ${r.reporter ? EDELALA.escapeHtml(r.reporter.fullName) : I18N.t('common.na')} ·
+            ${I18N.t('adminReports.reportedListing')}: ${r.listing ? EDELALA.escapeHtml(r.listing.title) : I18N.t('common.na')} ·
+            ${I18N.t('adminReports.reportedAgent')}: ${r.agent ? EDELALA.escapeHtml(r.agent.businessName) : I18N.t('common.na')}
+          </div>
+          <p style="margin:.4rem 0;">${EDELALA.escapeHtml(r.description || '—')}</p>
+          <div class="text-soft" style="font-size:.8rem;margin-bottom:.7rem;">${EDELALA.timeAgo(r.createdAt)}</div>
+          <div class="cluster">
+            ${r.status==='OPEN' ? `<button class="btn btn-outline btn-sm" data-review="${r.id}" data-i18n="adminReports.review"></button>` : ''}
+            ${r.status!=='DISMISSED' ? `<button class="btn btn-ghost btn-sm" data-dismiss="${r.id}" data-i18n="adminReports.dismiss"></button>` : ''}
+            ${r.listing ? `<button class="btn btn-danger btn-sm" data-del-listing="${r.listing.id}" data-report="${r.id}" data-i18n="adminReports.deleteListing"></button>` : ''}
+            ${r.agent ? `<button class="btn btn-danger btn-sm" data-suspend-agent="${r.agent.userId}" data-report="${r.id}" data-i18n="adminReports.suspendAgent"></button>` : ''}
+          </div>
+        </div>`).join('');
+      document.getElementById('empty').style.display = items.length ? 'none' : 'block';
+      I18N.applyTranslations();
+
+      document.querySelectorAll('[data-review]').forEach(btn=>btn.addEventListener('click', ()=>{ DB.updateReportStatus(btn.getAttribute('data-review'), 'REVIEWED'); refresh(); }));
+      document.querySelectorAll('[data-dismiss]').forEach(btn=>btn.addEventListener('click', ()=>{ DB.updateReportStatus(btn.getAttribute('data-dismiss'), 'DISMISSED'); refresh(); }));
+      document.querySelectorAll('[data-del-listing]').forEach(btn=>btn.addEventListener('click', async ()=>{
+        if(await EDELALA.confirmDialog(I18N.t('adminListings.confirmRemove'))){
+          DB.deleteListing(btn.getAttribute('data-del-listing'));
+          DB.updateReportStatus(btn.getAttribute('data-report'), 'RESOLVED');
+          refresh();
+        }
+      }));
+      document.querySelectorAll('[data-suspend-agent]').forEach(btn=>btn.addEventListener('click', async ()=>{
+        if(await EDELALA.confirmDialog(I18N.t('adminDelalas.confirmSuspend'))){
+          DB.suspendAgent(btn.getAttribute('data-suspend-agent'));
+          DB.updateReportStatus(btn.getAttribute('data-report'), 'RESOLVED');
+          refresh();
+        }
+      }));
+    }
+    document.addEventListener('edelala:langchange', refresh);
+    refresh();
+  }
+</script>
+</body>
+</html>

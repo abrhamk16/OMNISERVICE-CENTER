@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>E-Delala — My Tasks</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Noto+Sans+Ethiopic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/tokens.css">
+<link rel="stylesheet" href="../css/base.css">
+<style>.task-card{border:1px solid var(--mist-line); border-radius:var(--radius-m); padding:1.2rem; margin-bottom:1rem;}</style>
+</head>
+<body>
+<div id="site-header"></div>
+<div class="dash-shell">
+  <aside class="dash-sidebar" id="dash-sidebar"></aside>
+  <main class="dash-main">
+    <h1 data-i18n="agentTasks.title"></h1>
+    <div id="task-list"></div>
+    <div class="empty-state" id="empty" style="display:none;"><div class="icon">📋</div><p data-i18n="agentTasks.empty"></p></div>
+  </main>
+</div>
+<script src="../js/i18n/en.js"></script>
+<script src="../js/i18n/am.js"></script>
+<script src="../js/i18n.js"></script>
+<script src="../js/store.js"></script>
+<script src="../js/app.js"></script>
+<script>
+  const user = EDELALA.guardRole('AGENT');
+  if(user){
+    EDELALA.renderHeader('agent');
+    EDELALA.renderDashSidebar('agent', 'tasks.html');
+    function refresh(){
+      const items = DB.tasksByAgent(user.id);
+      document.getElementById('task-list').innerHTML = items.map(t=>`
+        <div class="task-card">
+          <div class="cluster" style="justify-content:space-between;">
+            <div style="font-weight:700;">${EDELALA.categoryIcon(t.category)} ${EDELALA.categoryLabel(t.category)} — ${EDELALA.escapeHtml(t.name)}</div>
+            <span class="badge badge-neutral">${I18N.t('request.status.'+t.status)}</span>
+          </div>
+          <p style="margin:.6rem 0;">${EDELALA.escapeHtml(t.description)}</p>
+          <div class="cluster text-soft" style="font-size:.85rem;">
+            <span>📞 ${EDELALA.escapeHtml(t.phone)}</span>
+            <span>📍 ${EDELALA.escapeHtml(t.location||'—')}</span>
+            <span>💰 <span data-i18n="agentTasks.budget"></span>: ${EDELALA.formatETB(t.budget)}</span>
+            <span>🕓 <span data-i18n="agentTasks.deadline"></span>: ${EDELALA.escapeHtml(t.deadline||'—')}</span>
+          </div>
+        </div>`).join('');
+      document.getElementById('empty').style.display = items.length ? 'none' : 'block';
+      I18N.applyTranslations();
+    }
+    document.addEventListener('edelala:langchange', refresh);
+    refresh();
+  }
+</script>
+</body>
+</html>

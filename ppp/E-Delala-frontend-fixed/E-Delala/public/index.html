@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>E-Delala — Find it. Rent it. Buy it.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Noto+Sans+Ethiopic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/base.css">
+<style>
+  .hero{background:linear-gradient(160deg, var(--violet-50) 0%, #fff 60%); padding-block:clamp(2.5rem,7vw,5.5rem);}
+  .hero .wrap{display:grid; grid-template-columns:1.1fr .9fr; gap:2.5rem; align-items:center;}
+  .hero h1{font-size:clamp(2.2rem,5vw,3.4rem);}
+  .search-panel{background:#fff; border:1px solid var(--mist-line); border-radius:var(--radius-l); padding:1.4rem; box-shadow:var(--shadow-card); margin-top:1.8rem;}
+  .search-panel form{display:flex; gap:.7rem; flex-wrap:wrap;}
+  .search-panel input[type=text]{flex:1; min-width:200px;}
+  .hero-visual{display:grid; grid-template-columns:1fr 1fr; gap:1rem;}
+  .hero-visual .tile{border-radius:var(--radius-m); overflow:hidden; box-shadow:var(--shadow-card); position:relative;}
+  .hero-visual .tile img{aspect-ratio:1; object-fit:cover;}
+  .hero-visual .tile:nth-child(2){margin-top:2rem;}
+  .hero-visual .tile:nth-child(3){margin-top:-1rem;}
+  .cat-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:1.2rem;}
+  .cat-card{border:1px solid var(--mist-line); border-radius:var(--radius-m); padding:1.6rem 1.2rem; text-align:center; text-decoration:none; color:inherit; transition:var(--transition);}
+  .cat-card:hover{border-color:var(--violet-500); box-shadow:var(--shadow-card); transform:translateY(-3px);}
+  .cat-card .emoji{font-size:2.2rem; display:block; margin-bottom:.6rem;}
+  .listing-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:1.4rem;}
+  .section-head{display:flex; align-items:baseline; justify-content:space-between; margin-bottom:1.5rem;}
+  .agent-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:1.4rem;}
+  .agent-card{border:1px solid var(--mist-line); border-radius:var(--radius-m); padding:1.4rem; display:flex; gap:1rem; align-items:flex-start;}
+  .agent-card img{width:56px;height:56px;border-radius:50%; object-fit:cover; flex-shrink:0;}
+  .cta-strip{background:var(--violet-900); color:#fff; border-radius:var(--radius-l); padding:2.5rem; display:flex; align-items:center; justify-content:space-between; gap:1.5rem; flex-wrap:wrap;}
+  .cta-strip h2{color:#fff;}
+  .cta-strip p{color:#d9c9ef;}
+  .reopen-link{display:inline-block; margin-top:.9rem; font-size:.85rem; color:var(--violet-700); text-decoration:none; font-weight:600; background:none; border:none; cursor:pointer; padding:0;}
+  .portal-modal .modal{max-width:560px;}
+  .portal-grid{display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-top:1.2rem;}
+  .portal-card{border:2px solid var(--mist-line); border-radius:var(--radius-m); padding:1.4rem 1.1rem; text-align:left; background:#fff; cursor:pointer; transition:var(--transition);}
+  .portal-card:hover{border-color:var(--violet-600); box-shadow:var(--shadow-card); transform:translateY(-2px);}
+  .portal-card .emoji{font-size:1.8rem; display:block; margin-bottom:.5rem;}
+  .portal-card strong{display:block; margin-bottom:.3rem; color:var(--violet-900); font-family:var(--font-display);}
+  .portal-card span.desc{font-size:.82rem; color:var(--ink-soft); display:block;}
+  .portal-skip{display:block; text-align:center; margin-top:1.2rem; font-size:.85rem; color:var(--ink-soft); background:none; border:none; cursor:pointer; text-decoration:underline;}
+  @media (max-width:520px){ .portal-grid{grid-template-columns:1fr;} }
+  @media (max-width:900px){
+    .hero .wrap{grid-template-columns:1fr;}
+    .hero-visual{display:none;}
+    .cat-grid{grid-template-columns:repeat(2,1fr);}
+    .listing-grid{grid-template-columns:repeat(2,1fr);}
+    .agent-grid{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+<div id="site-header"></div>
+
+<section class="hero">
+  <div class="wrap">
+    <div>
+      <h1 data-i18n="home.hero.title"></h1>
+      <p class="text-soft" style="max-width:46ch;font-size:1.1rem;" data-i18n="home.hero.subtitle"></p>
+      <div class="search-panel">
+        <form id="home-search-form">
+          <input type="text" id="home-search-input" data-i18n-placeholder="home.search.placeholder" placeholder="">
+          <button class="btn btn-primary" type="submit" data-i18n="home.search.button"></button>
+        </form>
+      </div>
+      <button type="button" class="reopen-link" id="reopen-portal-choice" data-i18n="portalChoice.reopen"></button>
+    </div>
+    <div class="hero-visual" aria-hidden="true">
+      <div class="tile"><img id="hv1" alt=""></div>
+      <div class="tile"><img id="hv2" alt=""></div>
+      <div class="tile"><img id="hv3" alt=""></div>
+      <div class="tile"><img id="hv4" alt=""></div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="wrap">
+    <div class="section-head"><h2 data-i18n="home.categories.title"></h2></div>
+    <div class="cat-grid">
+      <a class="cat-card" href="customer/browse.html?category=HOUSE"><span class="emoji">🏠</span><span data-i18n="home.cat.houses"></span></a>
+      <a class="cat-card" href="customer/browse.html?category=VEHICLE"><span class="emoji">🚗</span><span data-i18n="home.cat.vehicles"></span></a>
+      <a class="cat-card" href="customer/browse.html?category=MACHINERY"><span class="emoji">🚜</span><span data-i18n="home.cat.machinery"></span></a>
+      <a class="cat-card" href="customer/browse.html?category=SERVICE"><span class="emoji">🧹</span><span data-i18n="home.cat.services"></span></a>
+    </div>
+  </div>
+</section>
+
+<section class="section section-tight" style="background:var(--mist);">
+  <div class="wrap">
+    <div class="section-head">
+      <h2 data-i18n="home.featured.title"></h2>
+      <a class="btn btn-outline btn-sm" href="customer/browse.html" data-i18n="home.featured.viewAll"></a>
+    </div>
+    <div class="listing-grid" id="featured-listings"></div>
+    <div class="empty-state" id="featured-listings-empty" style="display:none;">
+      <div class="icon">🏷️</div>
+      <p data-i18n="common.notFound"></p>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="wrap">
+    <div class="section-head">
+      <h2 data-i18n="home.delalas.title"></h2>
+      <a class="btn btn-outline btn-sm" href="customer/find-delala.html" data-i18n="home.delalas.viewAll"></a>
+    </div>
+    <div class="agent-grid" id="featured-agents"></div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="wrap">
+    <div class="cta-strip">
+      <div>
+        <h2 data-i18n="home.cta.title"></h2>
+        <p data-i18n="home.cta.subtitle"></p>
+      </div>
+      <a class="btn btn-primary" href="agent/register.html" data-i18n="home.cta.button"></a>
+    </div>
+  </div>
+</section>
+
+<div id="site-footer"></div>
+
+<div class="modal-overlay portal-modal" id="portal-modal" style="display:none;">
+  <div class="modal">
+    <h3 data-i18n="portalChoice.title" style="margin-bottom:.3rem;"></h3>
+    <p class="text-soft" style="font-size:.9rem;" data-i18n="portalChoice.subtitle"></p>
+    <div class="portal-grid">
+      <button type="button" class="portal-card" id="choose-customer">
+        <span class="emoji">👤</span>
+        <strong data-i18n="nav.portal.customer"></strong>
+        <span class="desc" data-i18n="portalChoice.customerDesc"></span>
+      </button>
+      <button type="button" class="portal-card" id="choose-agent">
+        <span class="emoji">🤝</span>
+        <strong data-i18n="nav.portal.agent"></strong>
+        <span class="desc" data-i18n="portalChoice.agentDesc"></span>
+      </button>
+    </div>
+    <button type="button" class="portal-skip" id="skip-portal-choice" data-i18n="portalChoice.skip"></button>
+  </div>
+</div>
+
+<script src="js/i18n/en.js"></script>
+<script src="js/i18n/am.js"></script>
+<script src="js/i18n.js"></script>
+<script src="js/store.js"></script>
+<script src="js/app.js"></script>
+<script>
+  EDELALA.renderHeader('customer');
+  EDELALA.renderFooter();
+
+  // ---- Portal choice modal: ask Customer vs Delala on the front page ----
+  const PORTAL_FLAG = 'edelala.portalChoiceSeen';
+  function openPortalModal(){ document.getElementById('portal-modal').style.display = 'flex'; }
+  function closePortalModal(){ document.getElementById('portal-modal').style.display = 'none'; sessionStorage.setItem(PORTAL_FLAG, '1'); }
+  document.getElementById('choose-customer').addEventListener('click', closePortalModal);
+  document.getElementById('choose-agent').addEventListener('click', ()=>{ window.location.href = 'agent/login.html'; });
+  document.getElementById('skip-portal-choice').addEventListener('click', closePortalModal);
+  document.getElementById('reopen-portal-choice').addEventListener('click', openPortalModal);
+  if(!sessionStorage.getItem(PORTAL_FLAG) && !DB.currentUser()){
+    openPortalModal();
+  }
+
+  function renderListingCard(l){
+    const img = l.images && l.images[0] ? l.images[0] : DB.placeholderImg(l.title);
+    const priceSuffix = (l.category==='HOUSE' && l.purpose==='RENT') ? I18N.t('listing.month') : '';
+    const verifiedTag = l.agent && l.agent.verification.status==='APPROVED' ? EDELALA.verifiedStampHtml('sm') : '';
+    return `<a class="listing-card" href="customer/listing.html?id=${l.id}">
+      <div class="media">
+        <img src="${img}" alt="${EDELALA.escapeHtml(l.title)}">
+        <span class="purpose-tag">${I18N.t(l.purpose==='RENT'?'filter.rent':'filter.sale')}</span>
+      </div>
+      <div class="body">
+        <div class="price">${EDELALA.formatETB(l.price)}${priceSuffix}</div>
+        <div class="title">${EDELALA.escapeHtml(l.title)}</div>
+        <div class="meta"><span>📍 ${EDELALA.cityLabel(l.city)}</span></div>
+      </div>
+    </a>`;
+  }
+
+  function renderAgentCard(a){
+    const badge = a.verification.status==='APPROVED'
+      ? `<span class="badge badge-verified">🟢 ${I18N.t('agentProfile.verified')}</span>`
+      : `<span class="badge badge-neutral">${I18N.t('agentProfile.unverified')}</span>`;
+    return `<div class="agent-card">
+      <img src="${a.photo}" alt="${EDELALA.escapeHtml(a.businessName)}">
+      <div>
+        <div style="font-weight:700;">${EDELALA.escapeHtml(a.businessName)}</div>
+        <div class="text-soft" style="font-size:.85rem;margin-bottom:.4rem;">📍 ${EDELALA.cityLabel(a.city)} · ⭐ ${a.trustRating.toFixed(1)}</div>
+        ${badge}
+        <div style="margin-top:.7rem;">
+          <a class="btn btn-outline btn-sm" href="customer/agent-profile.html?id=${a.userId}" data-i18n="findDelala.viewProfile"></a>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  function refresh(){
+    const listings = DB.listListings({}).slice(0,4);
+    document.getElementById('featured-listings').innerHTML = listings.map(renderListingCard).join('');
+    document.getElementById('featured-listings-empty').style.display = listings.length ? 'none' : 'block';
+    const agents = DB.listAgents({}).sort((a,b)=>b.trustRating-a.trustRating).slice(0,3);
+    document.getElementById('featured-agents').innerHTML = agents.map(renderAgentCard).join('');
+    ['hv1','hv2','hv3','hv4'].forEach((id,i)=>{
+      document.getElementById(id).src = listings[i] ? (listings[i].images[0]) : DB.placeholderImg('E-Delala');
+    });
+    I18N.applyTranslations();
+  }
+  refresh();
+  document.addEventListener('edelala:langchange', refresh);
+
+  document.getElementById('home-search-form').addEventListener('submit', function(e){
+    e.preventDefault();
+    const q = document.getElementById('home-search-input').value.trim();
+    window.location.href = 'customer/browse.html' + (q ? ('?q='+encodeURIComponent(q)) : '');
+  });
+</script>
+</body>
+</html>

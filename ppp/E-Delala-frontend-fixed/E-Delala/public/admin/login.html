@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>E-Delala — Admin Login</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Noto+Sans+Ethiopic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/tokens.css">
+<link rel="stylesheet" href="../css/base.css">
+</head>
+<body>
+<div id="site-header"></div>
+<div class="auth-shell">
+  <div class="auth-card">
+    <!-- First-run setup: shown only while no admin account exists yet -->
+    <div id="setup-view" style="display:none;">
+      <h2 data-i18n="auth.admin.setupTitle"></h2>
+      <p class="text-soft" data-i18n="auth.admin.setupSubtitle" style="margin-bottom:1.2rem;"></p>
+      <form id="register-form" novalidate>
+        <div class="field"><label data-i18n="auth.fullName"></label><input type="text" id="fullName" required autocomplete="name"></div>
+        <div class="field"><label data-i18n="auth.email"></label><input type="email" id="email" required autocomplete="email"></div>
+        <div class="field"><label data-i18n="auth.password"></label><input type="password" id="password" required minlength="6" autocomplete="new-password"><div class="hint" data-i18n="auth.passwordHint"></div></div>
+        <div class="field"><label data-i18n="auth.confirmPassword"></label><input type="password" id="confirmPassword" required autocomplete="new-password"></div>
+        <button class="btn btn-primary btn-block" type="submit" data-i18n="auth.admin.create"></button>
+      </form>
+    </div>
+
+    <div id="login-view" style="display:none;">
+      <h2 data-i18n="auth.login.title"></h2>
+      <p class="text-soft" data-i18n="nav.portal.admin" style="margin-bottom:1.2rem;"></p>
+      <div class="auth-success" id="signup-success" data-i18n="auth.signupSuccess"></div>
+      <form id="login-form" novalidate>
+        <div class="field"><label data-i18n="auth.email"></label><input type="email" id="email" required autocomplete="email"></div>
+        <div class="field"><label data-i18n="auth.password"></label><input type="password" id="password" required autocomplete="current-password"></div>
+        <button class="btn btn-primary btn-block" type="submit" data-i18n="nav.login"></button>
+      </form>
+    </div>
+    <p style="text-align:center;margin-top:1rem;"><a href="../index.html" class="text-soft" style="font-size:.85rem;" data-i18n="common.backHome"></a></p>
+  </div>
+</div>
+<div id="site-footer"></div>
+<script src="../js/i18n/en.js"></script>
+<script src="../js/i18n/am.js"></script>
+<script src="../js/i18n.js"></script>
+<script src="../js/store.js"></script>
+<script src="../js/app.js"></script>
+<script>
+  EDELALA.renderHeader('admin');
+  EDELALA.renderFooter();
+  // Only one of the two forms exists in the page at a time, so their ids never clash.
+  (function(){
+    var setup = !DB.hasAdmin();
+    var setupView = document.getElementById('setup-view');
+    var loginView = document.getElementById('login-view');
+    if(setup){ loginView.remove(); setupView.style.display = 'block'; EDELALA.setupRegister('ADMIN', 'login.html'); }
+    else { setupView.remove(); loginView.style.display = 'block';
+      EDELALA.setupLogin('ADMIN', { redirect: 'dashboard.html', welcome: function(){ return 'Welcome back, admin.'; } }); }
+  })();
+</script>
+</body>
+</html>

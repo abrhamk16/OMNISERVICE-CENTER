@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>E-Delala — Admin: Verification</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Noto+Sans+Ethiopic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/tokens.css">
+<link rel="stylesheet" href="../css/base.css">
+<style>
+  .verify-card{display:flex; gap:1.2rem; border:1px solid var(--mist-line); border-radius:var(--radius-m); padding:1.2rem; margin-bottom:1rem; align-items:flex-start; flex-wrap:wrap;}
+  .verify-card img.id-img{width:160px;height:110px;object-fit:cover;border-radius:var(--radius-s); flex-shrink:0;}
+</style>
+</head>
+<body>
+<div id="site-header"></div>
+<div class="dash-shell">
+  <aside class="dash-sidebar" id="dash-sidebar"></aside>
+  <main class="dash-main">
+    <h1 data-i18n="adminVerification.title"></h1>
+    <div id="list"></div>
+    <div class="empty-state" id="empty" style="display:none;"><div class="icon">🛡️</div><p data-i18n="adminVerification.empty"></p></div>
+  </main>
+</div>
+
+<div class="modal-overlay" id="reject-modal" style="display:none;">
+  <div class="modal">
+    <h3 data-i18n="adminVerification.reject"></h3>
+    <div class="field"><label data-i18n="verification.rejectedReason"></label><textarea id="reject-reason"></textarea></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" data-close-modal data-i18n="common.cancel"></button>
+      <button class="btn btn-danger" id="reject-confirm" data-i18n="adminVerification.reject"></button>
+    </div>
+  </div>
+</div>
+
+<script src="../js/i18n/en.js"></script>
+<script src="../js/i18n/am.js"></script>
+<script src="../js/i18n.js"></script>
+<script src="../js/store.js"></script>
+<script src="../js/app.js"></script>
+<script>
+  const user = EDELALA.guardRole('ADMIN');
+  if(user){
+    EDELALA.renderHeader('admin');
+    EDELALA.renderDashSidebar('admin', 'verification.html');
+    let rejectTarget = null;
+
+    function refresh(){
+      const items = DB.pendingVerifications();
+      document.getElementById('list').innerHTML = items.map(a=>`
+        <div class="verify-card">
+          <div class="cluster" style="align-items:flex-start;gap:.7rem;">
+            <div>
+              <div class="text-soft" style="font-size:.72rem;margin-bottom:.2rem;" data-i18n="verification.idPhoto"></div>
+              <a href="${a.verification.idPhoto || DB.placeholderImg('ID')}" target="_blank"><img class="id-img" src="${a.verification.idPhoto || DB.placeholderImg('ID')}" alt=""></a>
+            </div>
+            <div>
+              <div class="text-soft" style="font-size:.72rem;margin-bottom:.2rem;" data-i18n="verification.paymentScreenshot"></div>
+              <a href="${a.verification.paymentScreenshot || DB.placeholderImg('No payment proof')}" target="_blank"><img class="id-img" src="${a.verification.paymentScreenshot || DB.placeholderImg('No payment proof')}" alt=""></a>
+            </div>
+          </div>
+          <div style="flex:1;min-width:220px;">
+            <div style="font-weight:700;">${EDELALA.escapeHtml(a.businessName)}</div>
+            <div class="text-soft" style="font-size:.85rem;">${EDELALA.escapeHtml(a.user.fullName)} · ${EDELALA.cityLabel(a.city)}</div>
+            <div class="text-soft" style="font-size:.85rem;">${I18N.t('verification.idType')}: ${I18N.t('verification.idType.'+a.verification.idType)}</div>
+            <div class="text-soft" style="font-size:.85rem;">${I18N.t('verification.paymentMethod')}: ${EDELALA.escapeHtml(a.verification.paymentMethod || I18N.t('common.na'))} — ${EDELALA.formatETB(a.verification.paymentAmount || DB.getSettings().verificationFee)}</div>
+            <div class="text-soft" style="font-size:.8rem;">${EDELALA.timeAgo(a.verification.submittedAt)}</div>
+          </div>
+          <div class="cluster">
+            <button class="btn btn-primary btn-sm" data-approve="${a.userId}" data-i18n="adminVerification.approve"></button>
+            <button class="btn btn-danger btn-sm" data-reject="${a.userId}" data-i18n="adminVerification.reject"></button>
+          </div>
+        </div>`).join('');
+      document.getElementById('empty').style.display = items.length ? 'none' : 'block';
+      I18N.applyTranslations();
+
+      document.querySelectorAll('[data-approve]').forEach(btn=>btn.addEventListener('click', ()=>{
+        DB.setVerificationStatus(btn.getAttribute('data-approve'), 'APPROVED');
+        EDELALA.toast(I18N.t('adminVerification.approved'), 'success');
+        refresh();
+      }));
+      document.querySelectorAll('[data-reject]').forEach(btn=>btn.addEventListener('click', ()=>{
+        rejectTarget = btn.getAttribute('data-reject');
+        document.getElementById('reject-modal').style.display = 'flex';
+      }));
+    }
+    document.querySelectorAll('[data-close-modal]').forEach(btn=>btn.addEventListener('click', ()=>btn.closest('.modal-overlay').style.display='none'));
+    document.getElementById('reject-confirm').addEventListener('click', ()=>{
+      DB.setVerificationStatus(rejectTarget, 'REJECTED', document.getElementById('reject-reason').value.trim());
+      document.getElementById('reject-modal').style.display = 'none';
+      document.getElementById('reject-reason').value = '';
+      EDELALA.toast(I18N.t('adminVerification.rejected'), 'success');
+      refresh();
+    });
+    document.addEventListener('edelala:langchange', refresh);
+    refresh();
+  }
+</script>
+</body>
+</html>

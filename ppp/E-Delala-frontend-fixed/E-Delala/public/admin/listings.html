@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>E-Delala — Admin: Listings</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Noto+Sans+Ethiopic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/tokens.css">
+<link rel="stylesheet" href="../css/base.css">
+<style>.filter-row{display:flex; gap:.8rem; margin-bottom:1.2rem; flex-wrap:wrap;}</style>
+</head>
+<body>
+<div id="site-header"></div>
+<div class="dash-shell">
+  <aside class="dash-sidebar" id="dash-sidebar"></aside>
+  <main class="dash-main">
+    <h1 data-i18n="adminListings.title"></h1>
+    <div class="filter-row">
+      <select id="f-cat" style="max-width:200px;">
+        <option value="" data-i18n="filter.all"></option>
+        <option value="HOUSE" data-i18n="home.cat.houses"></option>
+        <option value="VEHICLE" data-i18n="home.cat.vehicles"></option>
+        <option value="MACHINERY" data-i18n="home.cat.machinery"></option>
+        <option value="SERVICE" data-i18n="home.cat.services"></option>
+      </select>
+      <select id="f-status" style="max-width:200px;">
+        <option value="" data-i18n="filter.all"></option>
+        <option value="ACTIVE" data-i18n="myListings.status.ACTIVE"></option>
+        <option value="REMOVED" data-i18n="myListings.status.REMOVED"></option>
+      </select>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th data-i18n="addListing.field.title"></th><th data-i18n="listing.postedBy"></th><th data-i18n="filter.category"></th><th data-i18n="addListing.field.price"></th><th>Status</th><th></th></tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+  </main>
+</div>
+<script src="../js/i18n/en.js"></script>
+<script src="../js/i18n/am.js"></script>
+<script src="../js/i18n.js"></script>
+<script src="../js/store.js"></script>
+<script src="../js/app.js"></script>
+<script>
+  const user = EDELALA.guardRole('ADMIN');
+  if(user){
+    EDELALA.renderHeader('admin');
+    EDELALA.renderDashSidebar('admin', 'listings.html');
+
+    function renderRow(l){
+      const db = DB.all();
+      const agent = db.agentProfiles.find(a=>a.userId===l.agentId);
+      const badge = l.status==='ACTIVE' ? `<span class="badge badge-verified">${I18N.t('myListings.status.ACTIVE')}</span>` : `<span class="badge badge-alert">${I18N.t('myListings.status.REMOVED')}</span>`;
+      return `<tr>
+        <td>${EDELALA.escapeHtml(l.title)}</td>
+        <td>${agent ? EDELALA.escapeHtml(agent.businessName) : I18N.t('common.na')}</td>
+        <td>${EDELALA.categoryIcon(l.category)} ${EDELALA.categoryLabel(l.category)}</td>
+        <td>${EDELALA.formatETB(l.price)}</td>
+        <td>${badge}</td>
+        <td>
+          <div class="cluster">
+            <a class="btn btn-outline btn-sm" href="../customer/listing.html?id=${l.id}" target="_blank">👁</a>
+            ${l.status==='ACTIVE' ? `<button class="btn btn-danger btn-sm" data-remove="${l.id}" data-i18n="adminListings.remove"></button>` : `<button class="btn btn-outline btn-sm" data-restore="${l.id}" data-i18n="adminListings.restore"></button>`}
+          </div>
+        </td>
+      </tr>`;
+    }
+
+    function refresh(){
+      const db = DB.all();
+      let items = db.listings;
+      const cat = document.getElementById('f-cat').value;
+      const status = document.getElementById('f-status').value;
+      if(cat) items = items.filter(l=>l.category===cat);
+      if(status) items = items.filter(l=>l.status===status);
+      document.getElementById('rows').innerHTML = items.map(renderRow).join('');
+      I18N.applyTranslations();
+      document.querySelectorAll('[data-remove]').forEach(btn=>btn.addEventListener('click', async ()=>{
+        if(await EDELALA.confirmDialog(I18N.t('adminListings.confirmRemove'))){ DB.deleteListing(btn.getAttribute('data-remove')); refresh(); }
+      }));
+      document.querySelectorAll('[data-restore]').forEach(btn=>btn.addEventListener('click', ()=>{ DB.updateListing(btn.getAttribute('data-restore'), {status:'ACTIVE'}); refresh(); }));
+    }
+    document.getElementById('f-cat').addEventListener('change', refresh);
+    document.getElementById('f-status').addEventListener('change', refresh);
+    document.addEventListener('edelala:langchange', refresh);
+    refresh();
+  }
+</script>
+</body>
+</html>

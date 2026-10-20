@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>E-Delala — Contact Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Noto+Sans+Ethiopic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/tokens.css">
+<link rel="stylesheet" href="../css/base.css">
+<style>
+  .contact-shell{display:grid; grid-template-columns:1fr 1fr; gap:2.5rem; align-items:flex-start;}
+  .contact-form{max-width:480px;}
+  .history-item{border:1px solid var(--mist-line); border-radius:var(--radius-m); padding:1rem; margin-bottom:.9rem;}
+  @media (max-width:900px){ .contact-shell{grid-template-columns:1fr;} }
+</style>
+</head>
+<body>
+<div id="site-header"></div>
+<div class="wrap section-tight">
+  <h1 data-i18n="contact.title"></h1>
+  <p class="text-soft" style="max-width:60ch;" data-i18n="contact.subtitle"></p>
+  <div class="contact-shell">
+    <form id="contact-form" class="contact-form">
+      <div class="field"><label data-i18n="request.name"></label><input type="text" id="c-name" required></div>
+      <div class="field"><label data-i18n="request.email"></label><input type="email" id="c-email"></div>
+      <div class="field"><label data-i18n="request.phone"></label><input type="tel" id="c-phone"></div>
+      <div class="field">
+        <label data-i18n="contact.subject"></label>
+        <select id="c-subject">
+          <option value="listing" data-i18n="contact.subject.listing"></option>
+          <option value="agent" data-i18n="contact.subject.agent"></option>
+          <option value="account" data-i18n="contact.subject.account"></option>
+          <option value="payment" data-i18n="contact.subject.payment"></option>
+          <option value="other" data-i18n="contact.subject.other"></option>
+        </select>
+      </div>
+      <div class="field"><label data-i18n="contact.message"></label><textarea id="c-message" required></textarea></div>
+      <button class="btn btn-primary" type="submit" data-i18n="contact.submit"></button>
+    </form>
+    <div>
+      <h3 data-i18n="contact.historyTitle"></h3>
+      <div id="history-list"></div>
+      <div class="empty-state" id="history-empty" style="display:none;">
+        <div class="icon">💬</div>
+        <p data-i18n="contact.historyEmpty"></p>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="site-footer"></div>
+<script src="../js/i18n/en.js"></script>
+<script src="../js/i18n/am.js"></script>
+<script src="../js/i18n.js"></script>
+<script src="../js/store.js"></script>
+<script src="../js/app.js"></script>
+<script>
+  EDELALA.renderHeader('customer');
+  EDELALA.renderFooter();
+  const user = DB.currentUser();
+
+  function statusBadge(status){
+    const cls = status === 'RESOLVED' ? 'badge-verified' : 'badge-pending';
+    return `<span class="badge ${cls}">${I18N.t('contact.status.'+status)}</span>`;
+  }
+
+  function refreshHistory(){
+    if(!user || user.role !== 'CUSTOMER'){
+      document.getElementById('history-list').innerHTML = '';
+      document.getElementById('history-empty').style.display = 'block';
+      return;
+    }
+    const items = DB.supportMessagesByCustomer(user.id);
+    document.getElementById('history-list').innerHTML = items.map(m=>`
+      <div class="history-item">
+        <div class="cluster" style="justify-content:space-between;">
+          <strong>${I18N.t('contact.subject.'+m.subject)}</strong>
+          ${statusBadge(m.status)}
+        </div>
+        <p style="margin:.5rem 0 0;">${EDELALA.escapeHtml(m.message)}</p>
+        <div class="text-soft" style="font-size:.8rem;margin-top:.4rem;">${EDELALA.timeAgo(m.createdAt)}</div>
+      </div>`).join('');
+    document.getElementById('history-empty').style.display = items.length ? 'none' : 'block';
+    I18N.applyTranslations(document.getElementById('history-list'));
+  }
+
+  if(user){
+    document.getElementById('c-name').value = user.fullName;
+    document.getElementById('c-email').value = user.email;
+    document.getElementById('c-phone').value = user.phone;
+  }
+  refreshHistory();
+
+  document.getElementById('contact-form').addEventListener('submit', (e)=>{
+    e.preventDefault();
+    const name = document.getElementById('c-name').value.trim();
+    const message = document.getElementById('c-message').value.trim();
+    if(!name || !message){ EDELALA.toast(I18N.t('common.required'), 'error'); return; }
+    try {
+      DB.createSupportMessage({
+        customerId: user ? user.id : null, name,
+        email: document.getElementById('c-email').value.trim(),
+        phone: document.getElementById('c-phone').value.trim(),
+        subject: document.getElementById('c-subject').value,
+        message
+      });
+      EDELALA.toast(I18N.t('contact.submitted'), 'success');
+      document.getElementById('c-message').value = '';
+      refreshHistory();
+    } catch (err) {
+      EDELALA.toast(err && err.message === 'STORAGE_FULL' ? I18N.t('addListing.storageFull') : I18N.t('addListing.publishError'), 'error');
+    }
+  });
+  document.addEventListener('edelala:langchange', refreshHistory);
+</script>
+</body>
+</html>

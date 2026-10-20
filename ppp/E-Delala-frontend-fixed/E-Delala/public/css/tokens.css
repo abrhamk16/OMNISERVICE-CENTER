@@ -1,0 +1,80 @@
+/* ============================================
+   E-DELALA DESIGN TOKENS
+   ============================================ */
+:root{
+  --violet-900:#2E1348;
+  --violet-700:#4A2178;
+  --violet-600:#5B2A86;
+  --violet-500:#7440A8;
+  --violet-100:#F1EAFA;
+  --violet-50:#F8F5FC;
+
+  --ink:#1E1B22;
+  --ink-soft:#4A4552;
+  --paper:#FFFFFF;
+  --mist:#F6F4F8;
+  --mist-line:#E5E0EC;
+
+  --verified:#1E8E5A;
+  --verified-bg:#E7F6EE;
+  --pending:#C97A1F;
+  --pending-bg:#FBF0E1;
+  --alert:#B23A3A;
+  --alert-bg:#FBEAEA;
+
+  --font-display:'Fraunces', 'Noto Sans Ethiopic', serif;
+  --font-body:'Inter', 'Noto Sans Ethiopic', sans-serif;
+  --font-am:'Noto Sans Ethiopic', sans-serif;
+
+  --step--1: 0.875rem;
+  --step-0: 1rem;
+  --step-1: 1.25rem;
+  --step-2: 1.6rem;
+  --step-3: 2.1rem;
+  --step-4: 2.8rem;
+  --step-5: 3.6rem;
+
+  --radius-s:8px;
+  --radius-m:14px;
+  --radius-l:22px;
+  --gutter:clamp(1rem, 3vw, 2.5rem);
+  --maxw:1200px;
+  --shadow-card: 0 1px 2px rgba(30,20,45,.06), 0 8px 24px -12px rgba(30,20,45,.18);
+  --transition: 160ms cubic-bezier(.3,.1,.2,1);
+}
+
+[lang="am"], .lang-am{
+  --font-display:'Noto Sans Ethiopic', sans-serif;
+  --font-body:'Noto Sans Ethiopic', sans-serif;
+}
+
+*{box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  margin:0;
+  font-family:var(--font-body);
+  color:var(--ink);
+  background:var(--paper);
+  font-size:var(--step-0);
+  line-height:1.55;
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,h4{
+  font-family:var(--font-display);
+  color:var(--violet-900);
+  margin:0 0 .4em;
+  line-height:1.15;
+  font-weight:600;
+}
+h1{font-size:var(--step-4);}
+h2{font-size:var(--step-3);}
+h3{font-size:var(--step-2);}
+p{margin:0 0 1em;}
+a{color:inherit;}
+img{max-width:100%;display:block;}
+button, input, select, textarea{font-family:inherit;font-size:inherit;}
+:focus-visible{outline:3px solid var(--violet-500);outline-offset:2px;}
+
+@media (prefers-reduced-motion: reduce){
+  *{animation-duration:0.01ms !important; transition-duration:0.01ms !important;}
+}

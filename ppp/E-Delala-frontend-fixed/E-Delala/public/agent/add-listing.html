@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>E-Delala — Add Listing</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Noto+Sans+Ethiopic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/tokens.css">
+<link rel="stylesheet" href="../css/base.css">
+<style>
+  .steps-bar{display:flex; gap:.6rem; margin-bottom:2rem; flex-wrap:wrap;}
+  .steps-bar .step{display:flex; align-items:center; gap:.5rem; font-size:.85rem; font-weight:600; color:var(--ink-soft);}
+  .steps-bar .step .n{width:26px;height:26px;border-radius:50%;background:var(--mist); display:flex; align-items:center; justify-content:center; font-size:.8rem;}
+  .steps-bar .step.active{color:var(--violet-700);}
+  .steps-bar .step.active .n{background:var(--violet-600); color:#fff;}
+  .steps-bar .step.done .n{background:var(--verified); color:#fff;}
+  .wizard-card{max-width:720px; border:1px solid var(--mist-line); border-radius:var(--radius-l); padding:2rem; background:#fff;}
+  .cat-choice-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:1rem;}
+  .cat-choice{border:2px solid var(--mist-line); border-radius:var(--radius-m); padding:1.4rem 1rem; text-align:center; cursor:pointer; background:none; font-weight:600;}
+  .cat-choice.selected{border-color:var(--violet-600); background:var(--violet-100); color:var(--violet-800,var(--violet-700));}
+  .cat-choice .emoji{font-size:2rem; display:block; margin-bottom:.5rem;}
+  .upload-zone{border:2px dashed var(--mist-line); border-radius:var(--radius-m); padding:2rem; text-align:center; cursor:pointer; color:var(--ink-soft);}
+  .upload-zone:hover{border-color:var(--violet-500);}
+  .preview-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:.8rem; margin-top:1rem;}
+  .preview-grid .tile{position:relative; border-radius:var(--radius-s); overflow:hidden; aspect-ratio:1;}
+  .preview-grid .tile img{width:100%;height:100%;object-fit:cover;}
+  .preview-grid .tile button{position:absolute; top:4px; right:4px; background:rgba(0,0,0,.6); color:#fff; border:none; border-radius:50%; width:22px;height:22px; cursor:pointer; font-size:.7rem;}
+  .review-list dt{color:var(--ink-soft); font-size:.82rem; margin-top:.6rem;}
+  .review-list dd{margin:.1rem 0 0; font-weight:600;}
+  .review-images{display:flex; gap:.5rem; margin-top:.6rem; flex-wrap:wrap;}
+  .review-images img{width:70px;height:52px;object-fit:cover;border-radius:var(--radius-s);}
+  .wizard-actions{display:flex; justify-content:space-between; margin-top:2rem;}
+  @media (max-width:600px){ .cat-choice-grid{grid-template-columns:1fr 1fr;} .preview-grid{grid-template-columns:repeat(3,1fr);} }
+</style>
+</head>
+<body>
+<div id="site-header"></div>
+<div class="dash-shell">
+  <aside class="dash-sidebar" id="dash-sidebar"></aside>
+  <main class="dash-main">
+    <h1 data-i18n="addListing.title"></h1>
+    <div class="steps-bar" id="steps-bar"></div>
+    <div class="wizard-card">
+      <div id="step-1">
+        <h3 data-i18n="addListing.chooseCategory"></h3>
+        <div class="cat-choice-grid">
+          <button class="cat-choice" data-cat="HOUSE"><span class="emoji">🏠</span><span data-i18n="addListing.house"></span></button>
+          <button class="cat-choice" data-cat="VEHICLE"><span class="emoji">🚗</span><span data-i18n="addListing.vehicle"></span></button>
+          <button class="cat-choice" data-cat="MACHINERY"><span class="emoji">🚜</span><span data-i18n="addListing.machinery"></span></button>
+          <button class="cat-choice" data-cat="SERVICE"><span class="emoji">🧹</span><span data-i18n="addListing.service"></span></button>
+        </div>
+      </div>
+
+      <div id="step-2" style="display:none;">
+        <h3 data-i18n="addListing.step2"></h3>
+        <form id="details-form"></form>
+      </div>
+
+      <div id="step-3" style="display:none;">
+        <h3 data-i18n="addListing.step3"></h3>
+        <p class="text-soft" id="upload-hint-text"></p>
+        <div class="upload-zone" id="upload-zone">
+          <div style="font-size:1.8rem;">📷</div>
+          <div data-i18n="addListing.dragDrop"></div>
+          <input type="file" id="file-input" accept="image/png,image/jpeg,image/webp" multiple style="display:none;">
+        </div>
+        <div class="preview-grid" id="preview-grid"></div>
+        <p class="hint" id="photo-count-hint"></p>
+      </div>
+
+      <div id="step-4" style="display:none;">
+        <h3 data-i18n="addListing.step4"></h3>
+        <p class="text-soft" data-i18n="addListing.reviewNote"></p>
+        <dl class="review-list" id="review-body"></dl>
+        <div class="review-images" id="review-images"></div>
+      </div>
+
+      <div class="wizard-actions">
+        <button class="btn btn-ghost" id="back-btn" data-i18n="addListing.back" style="visibility:hidden;"></button>
+        <button class="btn btn-primary" id="next-btn" data-i18n="addListing.next" disabled></button>
+      </div>
+    </div>
+  </main>
+</div>
+<script src="../js/i18n/en.js"></script>
+<script src="../js/i18n/am.js"></script>
+<script src="../js/i18n.js"></script>
+<script src="../js/store.js"></script>
+<script src="../js/app.js"></script>
+<script>
+  const user = EDELALA.guardRole('AGENT');
+  if(user){
+    EDELALA.renderHeader('agent');
+    EDELALA.renderDashSidebar('agent', 'add-listing.html');
+
+    let step = 1;
+    let category = null;
+    let images = [];
+    const stepKeys = ['addListing.step1','addListing.step2','addListing.step3','addListing.step4'];
+
+    function renderStepsBar(){
+      document.getElementById('steps-bar').innerHTML = stepKeys.map((k,i)=>{
+        const n = i+1;
+        const cls = n===step ? 'active' : (n<step ? 'done' : '');
+        return `<div class="step ${cls}"><span class="n">${n<step?'✓':n}</span><span data-i18n="${k}"></span></div>`;
+      }).join('');
+      I18N.applyTranslations();
+    }
+
+    function fieldsForCategory(cat){
+      const common = `
+        <div class="field"><label data-i18n="addListing.field.title"></label><input type="text" id="fld-title" required></div>
+        <div class="field"><label data-i18n="addListing.field.description"></label><textarea id="fld-description"></textarea></div>
+        <div class="form-row">
+          <div class="field"><label data-i18n="addListing.field.purpose"></label>
+            <select id="fld-purpose"><option value="RENT" data-i18n="filter.rent"></option><option value="SALE" data-i18n="filter.sale"></option></select>
+          </div>
+          <div class="field"><label data-i18n="addListing.field.price"></label><input type="number" id="fld-price" required></div>
+        </div>
+        <div class="form-row">
+          <div class="field"><label data-i18n="addListing.field.agentFee"></label><input type="number" id="fld-agentFee"></div>
+          <div class="field"><label data-i18n="addListing.field.city"></label>
+            <select id="fld-city">${DB.CITIES.map(c=>`<option value="${c}">${EDELALA.cityLabel(c)}</option>`).join('')}</select>
+          </div>
+        </div>`;
+      if(cat === 'HOUSE'){
+        return common + `
+        <div class="field"><label data-i18n="addListing.field.neighborhood"></label><input type="text" id="fld-neighborhood"></div>
+        <div class="form-row">
+          <div class="field"><label data-i18n="addListing.field.bedrooms"></label><input type="number" id="fld-bedrooms"></div>
+          <div class="field"><label data-i18n="addListing.field.bathrooms"></label><input type="number" id="fld-bathrooms"></div>
+        </div>
+        <div class="field"><label data-i18n="addListing.field.propertyType"></label><input type="text" id="fld-propertyType" placeholder="Apartment, Villa, Studio…"></div>`;
+      }
+      if(cat === 'VEHICLE'){
+        return common + `
+        <div class="form-row">
+          <div class="field"><label data-i18n="addListing.field.brand"></label><input type="text" id="fld-brand"></div>
+          <div class="field"><label data-i18n="addListing.field.model"></label><input type="text" id="fld-model"></div>
+        </div>
+        <div class="form-row">
+          <div class="field"><label data-i18n="addListing.field.year"></label><input type="number" id="fld-year"></div>
+          <div class="field"><label data-i18n="addListing.field.condition"></label><input type="text" id="fld-condition" placeholder="Excellent, Good, Fair…"></div>
+        </div>`;
+      }
+      if(cat === 'MACHINERY'){
+        return common + `
+        <div class="form-row">
+          <div class="field"><label data-i18n="addListing.field.machineType"></label><input type="text" id="fld-machineType" placeholder="Excavator, Tractor, Generator…"></div>
+          <div class="field"><label data-i18n="addListing.field.condition"></label><input type="text" id="fld-condition"></div>
+        </div>`;
+      }
+      if(cat === 'SERVICE'){
+        return `
+        <div class="field"><label data-i18n="addListing.field.serviceTitle"></label><input type="text" id="fld-serviceTitle" required placeholder="e.g. Experienced Housemaid"></div>
+        <div class="field">
+          <label data-i18n="addListing.field.workerName"></label>
+          <input type="text" id="fld-title">
+        </div>
+        <p class="hint" data-i18n="addListing.servicePhotoNote" style="margin:-.6rem 0 1rem;"></p>
+        <div class="field"><label data-i18n="addListing.field.description"></label><textarea id="fld-description"></textarea></div>
+        <div class="form-row">
+          <div class="field"><label data-i18n="addListing.field.experience"></label><input type="number" id="fld-experience"></div>
+          <div class="field"><label data-i18n="addListing.field.city"></label>
+            <select id="fld-city">${DB.CITIES.map(c=>`<option value="${c}">${EDELALA.cityLabel(c)}</option>`).join('')}</select>
+          </div>
+        </div>
+        <div class="field"><label data-i18n="addListing.field.workplace"></label>
+          <select id="fld-workplace">
+            <option value="Home" data-i18n="addListing.workplace.home"></option>
+            <option value="Hotel" data-i18n="addListing.workplace.hotel"></option>
+            <option value="Office" data-i18n="addListing.workplace.office"></option>
+            <option value="Other" data-i18n="addListing.workplace.other"></option>
+          </select>
+        </div>
+        <div class="field"><label data-i18n="addListing.field.skills"></label><input type="text" id="fld-skills" placeholder="Cooking, cleaning, childcare"></div>
+        <div class="field"><label data-i18n="addListing.field.availability"></label>
+          <select id="fld-availability">
+            <option value="Available" data-i18n="addListing.availability.available"></option>
+            <option value="Unavailable" data-i18n="addListing.availability.unavailable"></option>
+          </select>
+        </div>
+        <div class="field"><label data-i18n="addListing.field.agentFee"></label><input type="number" id="fld-agentFee"></div>
+        <div class="field"><label data-i18n="addListing.field.notes"></label><textarea id="fld-notes"></textarea></div>`;
+      }
+      return '';
+    }
+
+    function collectDetails(){
+      const val = (id) => { const el = document.getElementById(id); return el ? el.value.trim() : ''; };
+      if(category === 'SERVICE'){
+        const serviceTitle = val('fld-serviceTitle');
+        const workerName = val('fld-title');
+        return {
+          title: serviceTitle || workerName || 'Household Service Listing',
+          workerName: workerName,
+          description: val('fld-description'),
+          price: Number(val('fld-agentFee') || 0),
+          agentFee: Number(val('fld-agentFee') || 0),
+          city: val('fld-city') || DB.CITIES[0],
+          purpose: 'RENT',
+          details: { workerName: workerName, experience: Number(val('fld-experience')||0), workplace: val('fld-workplace'), skills: val('fld-skills'), availability: val('fld-availability') },
+          notes: val('fld-notes')
+        };
+      }
+      const base = {
+        title: val('fld-title'), description: val('fld-description'),
+        purpose: val('fld-purpose'), price: Number(val('fld-price')||0), agentFee: Number(val('fld-agentFee')||0),
+        city: val('fld-city') || DB.CITIES[0]
+      };
+      if(category === 'HOUSE'){
+        base.neighborhood = val('fld-neighborhood');
+        base.details = { bedrooms: Number(val('fld-bedrooms')||0), bathrooms: Number(val('fld-bathrooms')||0), propertyType: val('fld-propertyType') };
+      } else if(category === 'VEHICLE'){
+        base.neighborhood = '';
+        base.details = { brand: val('fld-brand'), model: val('fld-model'), year: Number(val('fld-year')||0), condition: val('fld-condition') };
+      } else if(category === 'MACHINERY'){
+        base.neighborhood = '';
+        base.details = { machineType: val('fld-machineType'), condition: val('fld-condition') };
+      }
+      return base;
+    }
+
+    function renderPreviews(){
+      document.getElementById('preview-grid').innerHTML = images.map((src,i)=>`<div class="tile"><img src="${src}"><button data-rm="${i}" title="${I18N.t('addListing.remove')}">✕</button></div>`).join('');
+      document.querySelectorAll('[data-rm]').forEach(btn=>{
+        btn.addEventListener('click', ()=>{ images.splice(Number(btn.getAttribute('data-rm')),1); renderPreviews(); });
+      });
+      const minPhotos = category === 'SERVICE' ? 1 : 3;
+      document.getElementById('upload-hint-text').textContent = category === 'SERVICE' ? I18N.t('addListing.servicePhotoNote') : I18N.t('addListing.photoRequiredGeneral', { count: minPhotos });
+      const countEl = document.getElementById('photo-count-hint');
+      countEl.textContent = `${images.length} / ${minPhotos}+`;
+      countEl.style.color = images.length >= minPhotos ? 'var(--verified)' : 'var(--pending)';
+    }
+
+    function renderReview(){
+      const d = collectDetails();
+      const rows = [
+        ['addListing.field.title', d.title],
+        ['addListing.field.description', d.description],
+        ['addListing.field.price', EDELALA.formatETB(d.price)],
+        ['addListing.field.agentFee', EDELALA.formatETB(d.agentFee)],
+        ['addListing.field.city', EDELALA.cityLabel(d.city)]
+      ];
+      if(category !== 'SERVICE'){
+        rows.splice(2, 0, ['addListing.field.purpose', I18N.t(d.purpose==='RENT'?'filter.rent':'filter.sale')]);
+      }
+      document.getElementById('review-body').innerHTML = rows.map(([k,v])=>`<dt data-i18n="${k}"></dt><dd>${EDELALA.escapeHtml(v || '—')}</dd>`).join('');
+      I18N.applyTranslations(document.getElementById('review-body'));
+      document.getElementById('review-images').innerHTML = images.map(src=>`<img src="${src}">`).join('') || `<span class="text-soft">${I18N.t('common.na')}</span>`;
+    }
+
+    function showStep(){
+      document.getElementById('step-1').style.display = step===1 ? 'block' : 'none';
+      document.getElementById('step-2').style.display = step===2 ? 'block' : 'none';
+      document.getElementById('step-3').style.display = step===3 ? 'block' : 'none';
+      document.getElementById('step-4').style.display = step===4 ? 'block' : 'none';
+      document.getElementById('back-btn').style.visibility = step===1 ? 'hidden' : 'visible';
+      const nextBtn = document.getElementById('next-btn');
+      nextBtn.textContent = step===4 ? I18N.t('addListing.publish') : I18N.t('addListing.next');
+      nextBtn.disabled = step===1 && !category;
+      if(step===2){ document.getElementById('details-form').innerHTML = fieldsForCategory(category); I18N.applyTranslations(document.getElementById('details-form')); }
+      if(step===3){ renderPreviews(); }
+      if(step===4){ renderReview(); }
+      renderStepsBar();
+    }
+
+    document.querySelectorAll('.cat-choice').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        category = btn.getAttribute('data-cat');
+        document.querySelectorAll('.cat-choice').forEach(b=>b.classList.toggle('selected', b===btn));
+        document.getElementById('next-btn').disabled = false;
+      });
+    });
+
+    document.getElementById('upload-zone').addEventListener('click', ()=>document.getElementById('file-input').click());
+    document.getElementById('file-input').addEventListener('change', async (e)=>{
+      const files = Array.from(e.target.files);
+      e.target.value = '';
+      for(const file of files){
+        const compressed = await EDELALA.readImageCompressed(file);
+        if(compressed){ images.push(compressed); renderPreviews(); }
+      }
+    });
+
+    document.getElementById('back-btn').addEventListener('click', ()=>{ if(step>1){ step--; showStep(); } });
+    document.getElementById('next-btn').addEventListener('click', ()=>{
+      if(step===1 && !category) return;
+      if(step===2){
+        const titleFieldId = category === 'SERVICE' ? 'fld-serviceTitle' : 'fld-title';
+        const titleVal = document.getElementById(titleFieldId).value.trim();
+        if(!titleVal){ EDELALA.toast(I18N.t('common.required'), 'error'); return; }
+      }
+      if(step===3){
+        const minPhotos = category === 'SERVICE' ? 1 : 3;
+        if(images.length < minPhotos){
+          EDELALA.toast(category === 'SERVICE' ? I18N.t('addListing.photoRequiredService') : I18N.t('addListing.photoRequiredGeneral', { count: minPhotos }), 'error');
+          return;
+        }
+      }
+      if(step<4){ step++; showStep(); return; }
+      // publish
+      const d = collectDetails();
+      try {
+        DB.createListing({
+          category, agentId: user.id, title: d.title, description: d.description,
+          purpose: d.purpose, price: d.price, agentFee: d.agentFee, city: d.city,
+          neighborhood: d.neighborhood || '', details: d.details, images: images.length ? images : [DB.placeholderImg(d.title)]
+        });
+        EDELALA.toast(I18N.t('addListing.published'), 'success');
+        window.location.href = 'listings.html';
+      } catch (err) {
+        if(err && err.message === 'STORAGE_FULL'){
+          EDELALA.toast(I18N.t('addListing.storageFull'), 'error');
+        } else {
+          EDELALA.toast(I18N.t('addListing.publishError'), 'error');
+        }
+      }
+    });
+
+    showStep();
+    document.addEventListener('edelala:langchange', showStep);
+  }
+</script>
+</body>
+</html>
